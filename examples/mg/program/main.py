@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 import sys
@@ -19,6 +20,25 @@ from mg.program.scripts.preprocess.transformer import main as run_preprocess
 
 
 DEFAULT_DB_PATH = str(PROGRAM_ROOT / "data" / "20260407000000.db")
+AGENT_LOGGER_NAME = "Agent"
+_MG_AGENT_LOG_HANDLER = "_mg_agent_log_handler"
+
+
+def configure_agent_logging(level: int = logging.INFO) -> logging.Logger:
+    """Configure the APS Transformer logger for direct main.py execution."""
+
+    logger = logging.getLogger(AGENT_LOGGER_NAME)
+    logger.setLevel(level)
+    logger.propagate = False
+    if not any(getattr(handler, _MG_AGENT_LOG_HANDLER, False) for handler in logger.handlers):
+        handler = logging.StreamHandler()
+        setattr(handler, _MG_AGENT_LOG_HANDLER, True)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
+        logger.addHandler(handler)
+    for handler in logger.handlers:
+        if getattr(handler, _MG_AGENT_LOG_HANDLER, False):
+            handler.setLevel(level)
+    return logger
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -64,6 +84,7 @@ def run_pipeline(db_path: str | Path) -> dict[str, Any]:
 
 
 def main() -> None:
+    configure_agent_logging()
     payload = run_pipeline(parse_args().db_path)
     print(json.dumps(payload, indent=2, ensure_ascii=False))
 

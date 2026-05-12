@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 import sqlite3
 
@@ -8,11 +9,30 @@ from optagent.ir.eval_full import evaluate_full
 from mg.program.model.model import build_mg_program
 from mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
 from mg.program.model.rules import group_rule_costs, score_sequence
-from mg.program.main import parse_args as parse_program_args, run_pipeline
+from mg.program.main import AGENT_LOGGER_NAME, configure_agent_logging, parse_args as parse_program_args, run_pipeline
 from mg.program.scripts.postprocess.postprocess import write_legacy_compatibility_tables, write_output_tables
 from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
 import mg.program.main as mg_main
 from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
+
+
+def test_mg_program_main_configures_agent_logger() -> None:
+    logger = logging.getLogger(AGENT_LOGGER_NAME)
+    before = list(logger.handlers)
+
+    configured = configure_agent_logging()
+    configure_agent_logging()
+
+    tagged_handlers = [handler for handler in logger.handlers if getattr(handler, "_mg_agent_log_handler", False)]
+
+    assert configured is logger
+    assert logger.level == logging.INFO
+    assert logger.propagate is False
+    assert len(tagged_handlers) == 1
+
+    for handler in logger.handlers:
+        if handler not in before:
+            logger.removeHandler(handler)
 
 
 def _make_tiny_mg_db(path: Path) -> None:
