@@ -11,7 +11,7 @@ import types
 from typing import Any
 
 
-DEFAULT_APS_PRE_DECISION_ROOT = Path("/Users/dongbox/work/aps-pre-decision")
+DEFAULT_APS_PRE_DECISION_ROOT = Path("external/aps-pre-decision")
 APS_PRE_DECISION_ROOT = Path(os.environ.get("APS_PRE_DECISION_ROOT", str(DEFAULT_APS_PRE_DECISION_ROOT)))
 ZJ_DATA_PATH = APS_PRE_DECISION_ROOT / "test_data" / "物流平衡" / "zj" / "合同清单2026.1.23.xlsx"
 ZJ_CONFIG_DIR = APS_PRE_DECISION_ROOT / "app_lib" / "apps" / "resource_flow_optimizer" / "V2" / "test_config_dict" / "zj"

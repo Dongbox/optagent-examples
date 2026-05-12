@@ -1,6 +1,6 @@
 # MG OptAgent Migration Example
 
-This directory contains the first OptAgent migration scaffold for the MG scheduling project from `/Users/dongbox/Downloads/aps-projects-mg_0205-MG/MG`.
+This directory contains the first OptAgent migration scaffold for an APS-compatible MG scheduling project.
 
 The implementation is intentionally a sequence-blackbox model, organized to mirror the original MG `program/` layout:
 
@@ -22,7 +22,7 @@ The implementation is intentionally a sequence-blackbox model, organized to mirr
 Run from the repository root:
 
 ```bash
-PYTHONPATH=src python examples/mg/program/main.py examples/mg/program/data/20260407000000.db
+PYTHONPATH=. python examples/mg/program/main.py examples/mg/program/data/20260407000000.db
 ```
 
 The production entrypoint accepts one SQLite path. Preprocess input, model

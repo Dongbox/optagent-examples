@@ -21,11 +21,11 @@ This category is important because exact backends are not the only intended exec
 
 ## Included examples
 
-* [routing_heuristic.py](/Users/dongbox/work/optagent/examples/blackbox/routing_heuristic.py)
+* [routing_heuristic.py](../blackbox/routing_heuristic.py)
   Shows route ordering scored by a Python blackbox function and solved by the heuristic path.
-* [steel_transition_sequence.py](/Users/dongbox/work/optagent/examples/blackbox/steel_transition_sequence.py)
-  Compatibility entrypoint for the steel coil direct-weld sequencing example. The canonical runnable version now lives at [../steel/steel_blackbox_sequence.py](/Users/dongbox/work/optagent/examples/steel/steel_blackbox_sequence.py).
-* [tsp_blackbox_small.py](/Users/dongbox/work/optagent/examples/blackbox/tsp_blackbox_small.py)
+* [steel_transition_sequence.py](../blackbox/steel_transition_sequence.py)
+  Compatibility entrypoint for the steel coil direct-weld sequencing example. The canonical runnable version now lives at [../steel/steel_blackbox_sequence.py](../steel/steel_blackbox_sequence.py).
+* [tsp_blackbox_small.py](../blackbox/tsp_blackbox_small.py)
   Shows a small TSP-style route scored entirely by a blackbox objective and solved by heuristic search.
-* [tsp_evolutionary_small.py](/Users/dongbox/work/optagent/examples/blackbox/tsp_evolutionary_small.py)
+* [tsp_evolutionary_small.py](../blackbox/tsp_evolutionary_small.py)
   Shows the same small TSP-style blackbox objective routed through the evolutionary heuristic path.

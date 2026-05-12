@@ -23,16 +23,15 @@ and helper scripts.
 
 ## Install
 
-For local development next to the private source checkout:
+Install OptAgent from the approved distribution for your environment, then
+install the example dependencies:
 
 ```bash
-cd optagent-examples
-python -m pip install -e ../optagent
 python -m pip install -r requirements-dev.txt
 ```
 
-If `optagent` is already installed from a wheel, only install the example
-dependencies:
+For source-based development, install the OptAgent source checkout or wheel you
+intend to test before running examples, then install the example dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -59,8 +58,7 @@ Each example area has its own README with more specific commands and data notes.
 
 ## Test
 
-The pytest configuration adds this repository root and `../optagent/src` to the
-Python path for sibling-checkout development.
+Run tests after OptAgent is installed in the active Python environment.
 
 ```bash
 python -m pytest -q

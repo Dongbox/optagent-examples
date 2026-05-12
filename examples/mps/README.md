@@ -5,11 +5,11 @@
 运行方式：
 
 ```bash
-PYTHONPATH=src .venv-exact-stage1/bin/python examples/mps/solve_window.py --window 0 --summary-only
-PYTHONPATH=src .venv-exact-stage1/bin/python examples/mps/solve_window.py --window 0
-PYTHONPATH=src .venv-exact-stage1/bin/python examples/mps/solve_window.py --window 0 --mode hybrid
-PYTHONPATH=src .venv-exact-stage1/bin/python examples/mps/solve_window.py --window 0 --backend highs_native
-PYTHONPATH=src .venv-exact-stage1/bin/python examples/mps/solve_window.py --window 0 --backend mathopt_mp
+PYTHONPATH=. python examples/mps/solve_window.py --window 0 --summary-only
+PYTHONPATH=. python examples/mps/solve_window.py --window 0
+PYTHONPATH=. python examples/mps/solve_window.py --window 0 --mode hybrid
+PYTHONPATH=. python examples/mps/solve_window.py --window 0 --backend highs_native
+PYTHONPATH=. python examples/mps/solve_window.py --window 0 --backend mathopt_mp
 ```
 
 说明：

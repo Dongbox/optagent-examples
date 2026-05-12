@@ -21,15 +21,15 @@ Advanced inspect API:
 
 Included examples:
 
-* [scheduling_memetic_quality_preset.py](/Users/dongbox/work/optagent/examples/presets/scheduling_memetic_quality_preset.py)
+* [scheduling_memetic_quality_preset.py](../presets/scheduling_memetic_quality_preset.py)
   Uses the stage-1 scheduling memetic quality preset with repair plus local improvement.
-* [scheduling_evolutionary_repair_preset.py](/Users/dongbox/work/optagent/examples/presets/scheduling_evolutionary_repair_preset.py)
+* [scheduling_evolutionary_repair_preset.py](../presets/scheduling_evolutionary_repair_preset.py)
   Uses the built-in scheduling evolutionary repair preset on a small two-machine job shop.
-* [scheduling_evolutionary_repair_large_preset.py](/Users/dongbox/work/optagent/examples/presets/scheduling_evolutionary_repair_large_preset.py)
+* [scheduling_evolutionary_repair_large_preset.py](../presets/scheduling_evolutionary_repair_large_preset.py)
   Uses the same preset on a larger two-machine flow-shop-style scheduling model.
-* [routing_blackbox_preset.py](/Users/dongbox/work/optagent/examples/presets/routing_blackbox_preset.py)
+* [routing_blackbox_preset.py](../presets/routing_blackbox_preset.py)
   Uses an explicit built-in routing preset enum for a blackbox route objective.
-* [hybrid_production_preset.py](/Users/dongbox/work/optagent/examples/presets/hybrid_production_preset.py)
+* [hybrid_production_preset.py](../presets/hybrid_production_preset.py)
   Uses an explicit built-in hybrid-capable preset enum for a mixed planning-and-scheduling DAG.
-* [routing_blackbox_auto_preset.py](/Users/dongbox/work/optagent/examples/presets/routing_blackbox_auto_preset.py)
+* [routing_blackbox_auto_preset.py](../presets/routing_blackbox_auto_preset.py)
   Lets `Orchestrator().run(program)` auto-select the preset and exposes the selected preset in the result metadata.

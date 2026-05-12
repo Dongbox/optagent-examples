@@ -29,7 +29,7 @@ Routing controls:
 
 ## Included examples
 
-* [flow_shop_cp_sat.py](/Users/dongbox/work/optagent/examples/scheduling/flow_shop_cp_sat.py)
+* [flow_shop_cp_sat.py](../scheduling/flow_shop_cp_sat.py)
   Shows a tiny ordered flow-shop style schedule solved by `cp_sat_native`.
-* [job_shop_small.py](/Users/dongbox/work/optagent/examples/scheduling/job_shop_small.py)
+* [job_shop_small.py](../scheduling/job_shop_small.py)
   Shows a small job shop with two machines, precedence chains and CP-SAT native routing.

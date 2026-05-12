@@ -28,5 +28,5 @@ This category is where the current architecture is most visible: one DAG model c
 
 ## Included examples
 
-* [hybrid_production_planning_small.py](/Users/dongbox/work/optagent/examples/hybrid/hybrid_production_planning_small.py)
+* [hybrid_production_planning_small.py](../hybrid/hybrid_production_planning_small.py)
   Shows a small production planning problem where local output is coupled to interval lengths on a shared line, while outsourcing and tardiness stay in the linear part of the DAG. The solve path alternates heuristic seeding and CP-SAT exact refinement.

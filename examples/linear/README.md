@@ -33,11 +33,11 @@ Routing controls:
 
 ## Included examples
 
-* [knapsack_mathopt.py](/Users/dongbox/work/optagent/examples/linear/knapsack_mathopt.py)
+* [knapsack_mathopt.py](../linear/knapsack_mathopt.py)
   Shows 0/1 knapsack with strict routing to `mathopt_mp`.
-* [assignment_highs_native.py](/Users/dongbox/work/optagent/examples/linear/assignment_highs_native.py)
+* [assignment_highs_native.py](../linear/assignment_highs_native.py)
   Shows binary assignment with strict routing to `highs_native`.
-* [facility_location_small.py](/Users/dongbox/work/optagent/examples/linear/facility_location_small.py)
+* [facility_location_small.py](../linear/facility_location_small.py)
   Shows facility open/assign modeling with the default `milp` family route and backend selection through the registry.
-* [routing_linearized_small.py](/Users/dongbox/work/optagent/examples/linear/routing_linearized_small.py)
+* [routing_linearized_small.py](../linear/routing_linearized_small.py)
   Shows the same routing domain represented as a linearized MILP instead of a blackbox sequence objective.

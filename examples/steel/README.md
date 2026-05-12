@@ -13,7 +13,7 @@ Current phase status:
 * `solve_profiles.py` owns the steel example's default heuristic / exact / hybrid solve profiles.
 * `run_blackbox.py` and `run_dag.py` own CLI entrypoints and summary shaping.
 * `steel_blackbox_sequence.py` and `steel_dag_sequence.py` remain compatibility-facing thin wrappers.
-* [../blackbox/steel_transition_sequence.py](/Users/dongbox/work/optagent/examples/blackbox/steel_transition_sequence.py) remains as a compatibility wrapper.
+* [../blackbox/steel_transition_sequence.py](../blackbox/steel_transition_sequence.py) remains as a compatibility wrapper.
 * the steel entrypoints now use steel-specific preset logic built on top of the shared sequence machinery:
   * shared internal seed: compatibility path merge + break-repair polish
   * blackbox default:
@@ -43,14 +43,14 @@ Instance names currently available:
 Recommended commands:
 
 ```bash
-PYTHONPATH=src .venv/bin/python examples/steel/steel_blackbox_sequence.py --instance toy --mode preset
-PYTHONPATH=src .venv/bin/python examples/steel/steel_dag_sequence.py --instance toy --mode preset
-PYTHONPATH=src .venv/bin/python examples/steel/steel_dag_sequence.py --instance bundled_head40 --mode exact
-PYTHONPATH=src .venv/bin/python examples/steel/steel_dag_sequence.py --instance bundled --mode preset
-PYTHONPATH=src .venv/bin/python examples/steel/steel_dag_sequence.py --instance bundled --mode seed
-PYTHONPATH=src .venv/bin/python examples/steel/steel_blackbox_sequence.py --instance bundled_head40 --mode tabu --budget-iterations 200
-PYTHONPATH=src .venv/bin/python scripts/run_steel_experiments.py --instance bundled_head40 --mode preset --seed 0 --seed 1 --json-output evals/steel/bundled_head40-preset.json
-PYTHONPATH=src .venv/bin/python scripts/run_steel_search_attribution.py --instance bundled --search-seed 11 --json-output evals/steel/bundled-search-attribution.json
+PYTHONPATH=. python examples/steel/steel_blackbox_sequence.py --instance toy --mode preset
+PYTHONPATH=. python examples/steel/steel_dag_sequence.py --instance toy --mode preset
+PYTHONPATH=. python examples/steel/steel_dag_sequence.py --instance bundled_head40 --mode exact
+PYTHONPATH=. python examples/steel/steel_dag_sequence.py --instance bundled --mode preset
+PYTHONPATH=. python examples/steel/steel_dag_sequence.py --instance bundled --mode seed
+PYTHONPATH=. python examples/steel/steel_blackbox_sequence.py --instance bundled_head40 --mode tabu --budget-iterations 200
+PYTHONPATH=. python scripts/run_steel_experiments.py --instance bundled_head40 --mode preset --seed 0 --seed 1 --json-output evals/steel/bundled_head40-preset.json
+PYTHONPATH=. python scripts/run_steel_search_attribution.py --instance bundled --search-seed 11 --json-output evals/steel/bundled-search-attribution.json
 ```
 
 Search attribution workflow:
