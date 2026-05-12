@@ -1,0 +1,2 @@
+"""MG migration example package."""
+

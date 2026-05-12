@@ -1,0 +1,26 @@
+{
+  "name": "resource_flow_exact_milp",
+  "description": "Exact MILP solve path for large linear MPS windows rebuilt through OptAgent ModelBuilder.",
+  "family": "exact",
+  "objective": "quality",
+  "tags": ["mps", "linear", "exact", "milp"],
+  "requirements": ["highspy_or_ortools_mp"],
+  "match": {
+    "problem_type": "general",
+    "has_linear": true,
+    "has_blackbox": false,
+    "has_scheduling": false
+  },
+  "orchestrator_config": {
+    "total_budget_iterations": 300,
+    "phases": [
+      {
+        "name": "resource_flow_exact",
+        "solver": "milp",
+        "budget_iterations": 300,
+        "fallback_on_failure": false,
+        "fallback_on_stall": false
+      }
+    ]
+  }
+}

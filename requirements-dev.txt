@@ -1,0 +1,5 @@
+pytest
+ortools
+highspy
+numpy
+pandas

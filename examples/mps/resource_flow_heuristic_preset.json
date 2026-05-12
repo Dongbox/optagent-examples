@@ -1,0 +1,33 @@
+{
+  "name": "resource_flow_heuristic_tabu",
+  "description": "Heuristic-first solve path for structured resource-flow MPS windows rebuilt through OptAgent ModelBuilder.",
+  "family": "heuristic",
+  "objective": "balanced",
+  "tags": ["mps", "linear", "heuristic", "tabu", "annealing"],
+  "requirements": [],
+  "match": {
+    "problem_type": "general",
+    "has_linear": true,
+    "has_blackbox": false,
+    "has_scheduling": false
+  },
+  "orchestrator_config": {
+    "total_budget_iterations": 180,
+    "phases": [
+      {
+        "name": "resource_flow_seed",
+        "solver": "heuristic",
+        "budget_iterations": 60,
+        "strategy": "annealing",
+        "restart_limit": 1
+      },
+      {
+        "name": "resource_flow_intensify",
+        "solver": "heuristic",
+        "budget_iterations": 120,
+        "strategy": "tabu",
+        "restart_limit": 2
+      }
+    ]
+  }
+}

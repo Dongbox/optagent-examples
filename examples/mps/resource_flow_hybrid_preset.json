@@ -1,0 +1,34 @@
+{
+  "name": "resource_flow_heuristic_then_exact",
+  "description": "Heuristic warm start followed by exact MILP refinement for resource-flow windows rebuilt through OptAgent ModelBuilder.",
+  "family": "hybrid",
+  "objective": "balanced",
+  "tags": ["mps", "linear", "hybrid", "tabu", "milp"],
+  "requirements": ["highspy_or_ortools_mp"],
+  "match": {
+    "problem_type": "general",
+    "has_linear": true,
+    "has_blackbox": false,
+    "has_scheduling": false
+  },
+  "orchestrator_config": {
+    "total_budget_iterations": 260,
+    "phases": [
+      {
+        "name": "resource_flow_seed",
+        "solver": "heuristic",
+        "budget_iterations": 80,
+        "strategy": "tabu",
+        "restart_limit": 1
+      },
+      {
+        "name": "resource_flow_exact_refine",
+        "solver": "milp",
+        "budget_iterations": 180,
+        "fallback_on_failure": false,
+        "fallback_on_stall": false,
+        "warm_start": true
+      }
+    ]
+  }
+}
