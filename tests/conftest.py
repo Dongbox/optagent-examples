@@ -5,9 +5,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXAMPLES_ROOT = ROOT / "examples"
 LOCAL_OPTAGENT_SRC = ROOT.parent / "optagent" / "src"
 
-for path in (ROOT, LOCAL_OPTAGENT_SRC):
+for path in (EXAMPLES_ROOT, ROOT, LOCAL_OPTAGENT_SRC):
     text = str(path)
     if path.exists() and text not in sys.path:
         sys.path.insert(0, text)

@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
-from examples.mg.program.scripts.preprocess.data import MGCase, MGConnectableInfo, MGScore, MGTask
+from mg.program.scripts.preprocess.data import MGCase, MGConnectableInfo, MGScore, MGTask
 
 
 @dataclass

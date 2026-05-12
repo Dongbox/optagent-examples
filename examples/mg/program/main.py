@@ -9,13 +9,13 @@ import time
 from typing import Any
 
 PROGRAM_ROOT = Path(__file__).resolve().parent
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+EXAMPLES_ROOT = Path(__file__).resolve().parents[2]
+if str(EXAMPLES_ROOT) not in sys.path:
+    sys.path.insert(0, str(EXAMPLES_ROOT))
 
-from examples.mg.program.model.reports import run_production_case
-from examples.mg.program.scripts.postprocess.postprocess import run_postprocess
-from examples.mg.program.scripts.preprocess.transformer import main as run_preprocess
+from mg.program.model.reports import run_production_case
+from mg.program.scripts.postprocess.postprocess import run_postprocess
+from mg.program.scripts.preprocess.transformer import main as run_preprocess
 
 
 DEFAULT_DB_PATH = str(PROGRAM_ROOT / "data" / "20260407000000.db")

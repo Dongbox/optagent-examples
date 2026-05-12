@@ -15,7 +15,7 @@ from optagent import ModelBuilder
 from optagent.heuristic.sequence_adjacency import greedy_construct_sequence
 
 from .rules import _connectable, build_penalty_matrix, score_sequence_external
-from examples.mg.program.scripts.preprocess.data import MGCase
+from mg.program.scripts.preprocess.data import MGCase
 
 
 STRUCTURED_EDGE_RULES = (

@@ -30,7 +30,7 @@ from optagent import (
 
 from .model import build_mg_program
 from .rules import group_rule_costs, score_sequence
-from examples.mg.program.scripts.preprocess.data import MGCase
+from mg.program.scripts.preprocess.data import MGCase
 
 
 DEFAULT_SEARCH_MODES = ("tabu", "polish", "evolutionary")

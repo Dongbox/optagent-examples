@@ -5,14 +5,14 @@ import sqlite3
 
 from optagent.ir.eval_full import evaluate_full
 
-from examples.mg.program.model.model import build_mg_program
-from examples.mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
-from examples.mg.program.model.rules import group_rule_costs, score_sequence
-from examples.mg.program.main import parse_args as parse_program_args, run_pipeline
-from examples.mg.program.scripts.postprocess.postprocess import write_legacy_compatibility_tables, write_output_tables
-from examples.mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
-import examples.mg.program.main as mg_main
-from examples.mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
+from mg.program.model.model import build_mg_program
+from mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
+from mg.program.model.rules import group_rule_costs, score_sequence
+from mg.program.main import parse_args as parse_program_args, run_pipeline
+from mg.program.scripts.postprocess.postprocess import write_legacy_compatibility_tables, write_output_tables
+from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
+import mg.program.main as mg_main
+from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
 
 
 def _make_tiny_mg_db(path: Path) -> None:

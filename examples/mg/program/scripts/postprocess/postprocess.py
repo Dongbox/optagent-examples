@@ -5,8 +5,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from examples.mg.program.model.rules import group_rule_costs, score_sequence
-from examples.mg.program.scripts.preprocess.data import MGCase, MGScore, load_mg_case
+from mg.program.model.rules import group_rule_costs, score_sequence
+from mg.program.scripts.preprocess.data import MGCase, MGScore, load_mg_case
 
 
 def summarize_solution(case: MGCase, sequence: list[int], *, solver_metadata: dict[str, Any] | None = None) -> dict[str, Any]:

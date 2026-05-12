@@ -16,12 +16,12 @@ from typing import Any, Iterable
 from .model import STATEFUL_BLACKBOX_RULES, STRUCTURED_EDGE_RULES, build_structured_edges
 from .rules import group_rule_costs, score_sequence
 from .search import DEFAULT_SEARCH_MODES, solve_mg_sequence
-from examples.mg.program.scripts.postprocess.postprocess import (
+from mg.program.scripts.postprocess.postprocess import (
     write_legacy_compatibility_tables,
     write_production_output_tables,
     write_summary_json,
 )
-from examples.mg.program.scripts.preprocess.data import (
+from mg.program.scripts.preprocess.data import (
     MGCase,
     MGParityReport,
     MGParityRuleDelta,
