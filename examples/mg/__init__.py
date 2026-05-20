@@ -1,2 +1,1 @@
-"""MG migration example package."""
-
+"""Hot-dip galvanizing sequencing example package."""

@@ -12,7 +12,7 @@ Examples are organized by problem type first, then by backend or solve path.
 - `mps/`: MPS import, preset loading, and exact/heuristic solve paths.
 - `steel/`: steel coil sequencing examples and search diagnostics.
 - `resource_flow/`: public resource-flow CP-SAT and MILP formulations.
-- `mg/`: SQLite-driven MG migration example with public tiny data.
+- `mg/`: hot-dip galvanizing coil sequencing notebook with inline data.
 
 ## Run
 
@@ -34,4 +34,4 @@ PYTHONPATH=. python examples/mg/program/main.py examples/mg/program/data/2026040
 
 - `mathopt_mp` and `cp_sat_native` examples require `ortools`.
 - `highs_native` examples require `highspy`.
-- Some MG preprocess compatibility modules import optional APS dependencies only when the APS-compatible preprocess path is used.
+- Some hot-dip galvanizing/MG preprocess compatibility modules import optional APS dependencies only when the APS-compatible preprocess path is used.

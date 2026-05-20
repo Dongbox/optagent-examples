@@ -17,7 +17,7 @@ and helper scripts.
 - `examples/mps/`: MPS import and solve examples.
 - `examples/steel/`: steel coil sequencing examples and diagnostics.
 - `examples/resource_flow/`: resource-flow CP-SAT and MILP formulations.
-- `examples/mg/`: SQLite-driven MG migration example.
+- `examples/mg/`: hot-dip galvanizing coil sequencing notebook with inline data.
 - `tests/`: regression tests for the examples.
 - `scripts/`: repeatable example experiment helpers.
 
