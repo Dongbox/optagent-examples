@@ -41,6 +41,41 @@ def write_summary_json(payload: dict[str, Any], path: str | Path) -> None:
     Path(path).write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def read_output_tables(db_path: str | Path) -> dict[str, list[dict[str, Any]]]:
+    """Read the operator-facing OptAgent sequence and rule-cost tables."""
+
+    resolved = Path(db_path).expanduser().resolve()
+    conn = sqlite3.connect(resolved)
+    conn.row_factory = sqlite3.Row
+    try:
+        sequence = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT position, task_index, order_id, order_no, active, arranged_weight
+                FROM o_mg_optagent_sequence
+                ORDER BY position;
+                """
+            ).fetchall()
+        ]
+        rule_costs = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT rule_name, cost
+                FROM o_mg_optagent_rule_cost
+                ORDER BY CASE WHEN rule_name = 'total' THEN 1 ELSE 0 END, rule_name;
+                """
+            ).fetchall()
+        ]
+        return {
+            "sequence": sequence,
+            "rule_costs": rule_costs,
+        }
+    finally:
+        conn.close()
+
+
 def write_output_tables(case: MGCase, score: MGScore, *, output_db_path: str | Path | None = None) -> None:
     """Write the primary OptAgent sequence and rule-cost output tables."""
 
@@ -289,9 +324,11 @@ def run_postprocess(
         sequence_table=sequence_table,
         rule_cost_table=rule_cost_table,
     )
+    output_tables = read_output_tables(db_path)
     return {
         "status": "written",
         "db_path": str(Path(db_path).expanduser().resolve()),
         "sequence_table": sequence_table,
         "rule_cost_table": rule_cost_table,
+        **output_tables,
     }

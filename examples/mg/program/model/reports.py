@@ -151,6 +151,10 @@ def build_search_replacement_report(
     budget_iterations: int = 80,
     generation_limit: int = 8,
     use_constructive_default: bool = False,
+    progress_logging: bool = False,
+    progress_log_level: int | None = None,
+    heuristic_cost_logging: bool = True,
+    heuristic_cost_logging_policy: str = "improved",
 ) -> dict[str, Any]:
     """Build migration diagnostics around the actual OptAgent search result.
 
@@ -166,6 +170,10 @@ def build_search_replacement_report(
         budget_iterations=budget_iterations,
         generation_limit=generation_limit,
         use_constructive_default=use_constructive_default,
+        progress_logging=progress_logging,
+        progress_log_level=progress_log_level,
+        heuristic_cost_logging=heuristic_cost_logging,
+        heuristic_cost_logging_policy=heuristic_cost_logging_policy,
     )
     parity_report = build_parity_report(case.db_path, case=case)
     aps_total = parity_report.aps_total
@@ -292,6 +300,10 @@ def run_production_case(
     json_output: str | Path | None = None,
     dry_run: bool = False,
     write_legacy_compat: bool = False,
+    progress_logging: bool = False,
+    progress_log_level: int | None = None,
+    heuristic_cost_logging: bool = True,
+    heuristic_cost_logging_policy: str = "improved",
 ) -> dict[str, Any]:
     """Run the SQLite model phase and write auditable OptAgent output tables.
 
@@ -309,6 +321,10 @@ def run_production_case(
         budget_iterations=budget_iterations,
         generation_limit=generation_limit,
         use_constructive_default=use_constructive_default,
+        progress_logging=progress_logging,
+        progress_log_level=progress_log_level,
+        heuristic_cost_logging=heuristic_cost_logging,
+        heuristic_cost_logging_policy=heuristic_cost_logging_policy,
     )
     best_score = score_sequence(case, report["best"]["sequence"])
     structured = build_structured_report(case, sequence=report["best"]["sequence"])

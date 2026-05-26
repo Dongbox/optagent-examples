@@ -9,6 +9,7 @@ parity or migration reports; those responsibilities live in `reports.py`.
 """
 
 from dataclasses import asdict, dataclass
+import logging
 from time import perf_counter
 from typing import Any, Iterable
 
@@ -26,6 +27,7 @@ from optagent import (
     OrchestratorConfig,
     OrchestratorSolver,
     PhaseConfig,
+    ProgressEvent,
 )
 
 from .model import build_mg_program
@@ -34,6 +36,7 @@ from mg.program.scripts.preprocess.data import MGCase
 
 
 DEFAULT_SEARCH_MODES = ("tabu", "polish", "evolutionary")
+OPTAGENT_LOGGER_NAME = "OptAgent"
 
 
 @dataclass(frozen=True)
@@ -67,6 +70,11 @@ def build_mg_config(
     budget_iterations: int,
     generation_limit: int,
     seed: int,
+    progress_logging: bool = False,
+    progress_log_level: int | None = None,
+    progress_callback: Any | None = None,
+    heuristic_cost_logging: bool = True,
+    heuristic_cost_logging_policy: str = "improved",
 ) -> OrchestratorConfig:
     """Map an MG search mode to a compact OptAgent orchestration config.
 
@@ -75,12 +83,24 @@ def build_mg_config(
     module directly with custom budgets when comparing profiles.
     """
 
+    progress_kwargs: dict[str, Any] = {
+        "progress_logging": progress_logging,
+        "progress_mode": mode,
+        "heuristic_cost_logging": heuristic_cost_logging,
+        "heuristic_cost_logging_policy": heuristic_cost_logging_policy,
+    }
+    if progress_log_level is not None:
+        progress_kwargs["progress_log_level"] = progress_log_level
+    if progress_callback is not None:
+        progress_kwargs["progress_callback"] = progress_callback
+
     if mode == "tabu":
         # Fast local search around the warm-start sequence. This is the default
         # low-overhead replacement for the original GA's local improvement loop.
         return OrchestratorConfig(
             seed=seed,
             total_budget_iterations=budget_iterations,
+            **progress_kwargs,
             phases=[
                 PhaseConfig(
                     name="mg_sequence_tabu",
@@ -96,6 +116,7 @@ def build_mg_config(
         return OrchestratorConfig(
             seed=seed,
             total_budget_iterations=budget_iterations,
+            **progress_kwargs,
             phases=[
                 PhaseConfig(
                     name="mg_repair",
@@ -137,6 +158,7 @@ def build_mg_config(
     return OrchestratorConfig(
         seed=seed,
         total_budget_iterations=budget_iterations,
+        **progress_kwargs,
         phases=[
             PhaseConfig(
                 name="mg_sequence_evolutionary",
@@ -210,6 +232,121 @@ def _trace_tail(traces: list[Any], *, limit: int = 3) -> list[dict[str, Any]]:
     return [asdict(trace) for trace in traces[-limit:]]
 
 
+def _run_score_curve(
+    *,
+    mode: str,
+    seed: int,
+    baseline_cost: float,
+    result: Any,
+    final_cost: float,
+) -> list[dict[str, Any]]:
+    curve = [
+        {
+            "mode": mode,
+            "seed": seed,
+            "step": 0,
+            "source": "baseline",
+            "score": baseline_cost,
+        }
+    ]
+    step = 1
+    for trace in getattr(result, "solver_traces", []):
+        curve.append(
+            {
+                "mode": mode,
+                "seed": seed,
+                "step": step,
+                "source": "phase",
+                "phase_name": trace.phase_name,
+                "solver_name": trace.solver_name,
+                "score": float(trace.score),
+                "feasible": bool(trace.feasible),
+            }
+        )
+        step += 1
+    for trace in getattr(result, "heuristic_subphase_traces", []):
+        curve.append(
+            {
+                "mode": mode,
+                "seed": seed,
+                "step": step,
+                "source": "subphase",
+                "phase_name": trace.phase_name,
+                "score": float(trace.score_after),
+                "best_score": float(trace.best_score_after),
+                "feasible": bool(trace.feasible),
+            }
+        )
+        step += 1
+    for trace in getattr(result, "evolutionary_generation_traces", []):
+        curve.append(
+            {
+                "mode": mode,
+                "seed": seed,
+                "step": step,
+                "source": "generation",
+                "generation": int(trace.generation),
+                "score": float(trace.best_score),
+                "mean_score": float(trace.mean_score),
+                "feasible": bool(trace.best_feasible),
+                "improved": bool(trace.improved),
+                "termination_reason": trace.termination_reason,
+            }
+        )
+        step += 1
+    curve.append(
+        {
+            "mode": mode,
+            "seed": seed,
+            "step": step,
+            "source": "final",
+            "score": final_cost,
+            "feasible": bool(result.final_solution.feasible),
+        }
+    )
+    return curve
+
+
+def _progress_score_curve(
+    *,
+    mode: str,
+    seed: int,
+    events: list[ProgressEvent],
+    start_step: int,
+) -> list[dict[str, Any]]:
+    curve: list[dict[str, Any]] = []
+    step = start_step
+    for event in events:
+        if event.event_type != "heuristic_cost_updated":
+            continue
+        payload = dict(event.payload)
+        source = "accepted_move" if payload.get("accepted") else "move"
+        curve.append(
+            {
+                "mode": mode,
+                "seed": seed,
+                "step": step,
+                "source": source,
+                "phase_name": event.phase_name,
+                "iteration": payload.get("iteration"),
+                "score": payload.get("score"),
+                "best_score": payload.get("best_score"),
+                "objective_score": payload.get("objective_score"),
+                "penalty_score": payload.get("penalty_score"),
+                "accepted": payload.get("accepted"),
+                "improved_best": payload.get("improved_best"),
+                "move_kind": payload.get("move_kind"),
+                "node_id": payload.get("node_id"),
+                "feasible": payload.get("feasible"),
+                "strategy": payload.get("strategy"),
+                "portfolio_round": payload.get("portfolio_round"),
+                "worker_index": payload.get("worker_index"),
+            }
+        )
+        step += 1
+    return curve
+
+
 def _summarize_run(
     *,
     case: MGCase,
@@ -254,6 +391,10 @@ def solve_mg_sequence(
     budget_iterations: int = 80,
     generation_limit: int = 8,
     use_constructive_default: bool = False,
+    progress_logging: bool = False,
+    progress_log_level: int | None = None,
+    heuristic_cost_logging: bool = True,
+    heuristic_cost_logging_policy: str = "improved",
 ) -> dict[str, Any]:
     """Run the actual OptAgent sequence search without report-only baselines."""
 
@@ -271,11 +412,24 @@ def solve_mg_sequence(
     baseline_score = score_sequence(case, baseline_sequence)
 
     runs: list[MGSearchRun] = []
+    score_curve: list[dict[str, Any]] = []
     for mode in selected_modes:
         for seed in selected_seeds:
+            progress_events: list[ProgressEvent] = []
+
+            def collect_progress(event: ProgressEvent) -> None:
+                progress_events.append(event)
+
             # Each mode/seed pair is an independent solve attempt over the same
             # frozen OptAgent program. This makes comparison deterministic and
             # keeps production best-run selection auditable.
+            if progress_logging:
+                logging.getLogger(OPTAGENT_LOGGER_NAME).info(
+                    "OptAgent baseline cost mode=%s seed=%s score=%s",
+                    mode,
+                    seed,
+                    baseline_score.total_cost,
+                )
             start = perf_counter()
             result = Orchestrator().run(
                 built.program,
@@ -284,21 +438,43 @@ def solve_mg_sequence(
                     budget_iterations=budget_iterations,
                     generation_limit=generation_limit,
                     seed=seed,
+                    progress_logging=progress_logging,
+                    progress_log_level=progress_log_level,
+                    progress_callback=collect_progress,
+                    heuristic_cost_logging=heuristic_cost_logging,
+                    heuristic_cost_logging_policy=heuristic_cost_logging_policy,
                 ),
             )
             runtime_seconds = perf_counter() - start
             sequence = _sequence_from_result(result, built.sequence_node_id)
-            runs.append(
-                _summarize_run(
-                    case=case,
-                    baseline_cost=baseline_score.total_cost,
-                    mode=mode,
-                    seed=seed,
-                    result=result,
-                    sequence=sequence,
-                    runtime_seconds=runtime_seconds,
-                )
+            run = _summarize_run(
+                case=case,
+                baseline_cost=baseline_score.total_cost,
+                mode=mode,
+                seed=seed,
+                result=result,
+                sequence=sequence,
+                runtime_seconds=runtime_seconds,
             )
+            runs.append(run)
+            run_curve = _run_score_curve(
+                mode=mode,
+                seed=seed,
+                baseline_cost=baseline_score.total_cost,
+                result=result,
+                final_cost=run.total_cost,
+            )
+            move_curve = _progress_score_curve(
+                mode=mode,
+                seed=seed,
+                events=progress_events,
+                start_step=1,
+            )
+            if move_curve:
+                run_curve = [run_curve[0], *move_curve, *run_curve[1:]]
+                for step, point in enumerate(run_curve):
+                    point["step"] = step
+            score_curve.extend(run_curve)
 
     sorted_runs = sorted(runs, key=lambda run: (run.total_cost, run.runtime_seconds, run.mode, run.seed))
     best_run = sorted_runs[0]
@@ -322,4 +498,5 @@ def solve_mg_sequence(
         },
         "best": asdict(best_run),
         "runs": [asdict(run) for run in sorted_runs],
+        "score_curve": score_curve,
     }

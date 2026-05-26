@@ -9,8 +9,17 @@ from optagent.ir.eval_full import evaluate_full
 from mg.program.model.model import build_mg_program
 from mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
 from mg.program.model.rules import group_rule_costs, score_sequence
-from mg.program.main import AGENT_LOGGER_NAME, configure_agent_logging, parse_args as parse_program_args, run_pipeline
-from mg.program.scripts.postprocess.postprocess import write_legacy_compatibility_tables, write_output_tables
+from mg.program.model.search import build_mg_config
+from mg.program.main import (
+    AGENT_LOGGER_NAME,
+    OPTAGENT_LOGGER_NAME,
+    configure_agent_logging,
+    configure_optagent_logging,
+    parse_args as parse_program_args,
+    run_pipeline,
+    terminal_output_payload,
+)
+from mg.program.scripts.postprocess.postprocess import read_output_tables, write_legacy_compatibility_tables, write_output_tables
 from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
 import mg.program.main as mg_main
 from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
@@ -18,21 +27,52 @@ from mg.program.scripts.preprocess.transformer import CustomTransformer, main as
 
 def test_mg_program_main_configures_agent_logger() -> None:
     logger = logging.getLogger(AGENT_LOGGER_NAME)
+    optagent_logger = logging.getLogger(OPTAGENT_LOGGER_NAME)
     before = list(logger.handlers)
+    optagent_before = list(optagent_logger.handlers)
 
     configured = configure_agent_logging()
     configure_agent_logging()
+    optagent_configured = configure_optagent_logging()
+    configure_optagent_logging()
 
     tagged_handlers = [handler for handler in logger.handlers if getattr(handler, "_mg_agent_log_handler", False)]
+    optagent_tagged_handlers = [
+        handler for handler in optagent_logger.handlers if getattr(handler, "_mg_optagent_log_handler", False)
+    ]
 
     assert configured is logger
     assert logger.level == logging.INFO
     assert logger.propagate is False
     assert len(tagged_handlers) == 1
+    assert optagent_configured is optagent_logger
+    assert optagent_logger.level == logging.INFO
+    assert optagent_logger.propagate is False
+    assert len(optagent_tagged_handlers) == 1
 
     for handler in logger.handlers:
         if handler not in before:
             logger.removeHandler(handler)
+    for handler in optagent_logger.handlers:
+        if handler not in optagent_before:
+            optagent_logger.removeHandler(handler)
+
+
+def test_mg_config_can_enable_optagent_progress_logging() -> None:
+    config = build_mg_config(
+        mode="tabu",
+        budget_iterations=4,
+        generation_limit=2,
+        seed=7,
+        progress_logging=True,
+        progress_log_level=logging.WARNING,
+    )
+
+    assert config.progress_logging is True
+    assert config.progress_log_level == logging.WARNING
+    assert config.progress_mode == "tabu"
+    assert config.heuristic_cost_logging is True
+    assert config.heuristic_cost_logging_policy == "improved"
 
 
 def _make_tiny_mg_db(path: Path) -> None:
@@ -189,6 +229,7 @@ def test_mg_case_loader_scores_and_builds_program(tmp_path: Path) -> None:
     assert len(built.program.metadata["sequence_structured_edges"]) == 3
 
     write_output_tables(case, score)
+    output_tables = read_output_tables(db_path)
     conn = sqlite3.connect(db_path)
     try:
         sequence_count = conn.execute("SELECT COUNT(*) FROM o_mg_optagent_sequence;").fetchone()[0]
@@ -198,6 +239,8 @@ def test_mg_case_loader_scores_and_builds_program(tmp_path: Path) -> None:
 
     assert sequence_count == 3
     assert cost_count >= 1
+    assert len(output_tables["sequence"]) == 3
+    assert output_tables["rule_costs"][-1]["rule_name"] == "total"
 
 
 def test_mg_parity_report_reads_aps_baseline(tmp_path: Path) -> None:
@@ -252,6 +295,9 @@ def test_mg_search_replacement_report_runs_profile_matrix(tmp_path: Path) -> Non
     assert payload["best"]["seed"] in {3, 5}
     assert len(payload["best"]["sequence"]) == 3
     assert payload["best"]["solver_trace_count"] >= 1
+    assert payload["score_curve"]
+    assert {point["source"] for point in payload["score_curve"]} >= {"baseline", "accepted_move", "phase", "final"}
+    assert any(point.get("improved_best") for point in payload["score_curve"] if point["source"] == "accepted_move")
     assert payload["runs"][0]["total_cost"] <= payload["runs"][-1]["total_cost"]
 
 
@@ -433,6 +479,13 @@ def test_mg_program_main_pipeline_runs_model_and_postprocess(tmp_path: Path, mon
     assert payload["preprocess"]["ok"] is True
     assert "model_run" in payload["runtime"]
     assert "postprocess" in payload["runtime"]
+    assert len(payload["postprocess"]["sequence"]) == 3
+    assert payload["postprocess"]["rule_costs"][-1]["rule_name"] == "total"
+    assert terminal_output_payload(payload) == {
+        "rule_costs": payload["postprocess"]["rule_costs"],
+        "score_curve": payload["model"]["score_curve"],
+    }
+    assert "sequence" not in terminal_output_payload(payload)
     assert sequence_count == 3
     assert compat_count == 3
 
