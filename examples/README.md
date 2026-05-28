@@ -13,6 +13,7 @@ Examples are organized by problem type first, then by backend or solve path.
 - `steel/`: steel coil sequencing examples and search diagnostics.
 - `resource_flow/`: public resource-flow CP-SAT and MILP formulations.
 - `mg/`: hot-dip galvanizing coil sequencing notebook with inline data.
+- `cold_rolling/`: generic cold-rolling coil sequencing notebook with inline data.
 
 ## Run
 

@@ -18,6 +18,7 @@ and helper scripts.
 - `examples/steel/`: steel coil sequencing examples and diagnostics.
 - `examples/resource_flow/`: resource-flow CP-SAT and MILP formulations.
 - `examples/mg/`: hot-dip galvanizing coil sequencing notebook with inline data.
+- `examples/cold_rolling/`: generic cold-rolling coil sequencing notebook with inline data.
 - `tests/`: regression tests for the examples.
 - `scripts/`: repeatable example experiment helpers.
 
