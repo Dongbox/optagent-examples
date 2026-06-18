@@ -140,7 +140,6 @@ def build_single_window_program(
             "contracts": len(model_input.D),
             "machines": len(config.m_real),
         },
-        solve_config={"preferred_backend": "cp_sat_native"},
     )
     vars_by_name: dict[str, Any] = {}
 

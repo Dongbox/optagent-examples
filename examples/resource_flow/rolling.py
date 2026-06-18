@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from optagent import CpSatSolver
+from optagent import CpSatConfig, solve_cpsat
 
 from .cp_builder import advance_window_input, build_single_window_program, roll_named_warm_start
 
@@ -45,9 +45,13 @@ def run_rolling_cp_sat(config: Any, model_input: Any) -> RollingWindowResult:
             for name, value in named_hint.items()
             if name in built.variable_node_ids
         }
-        result = CpSatSolver().solve(built.program, warm_start=warm_start or None)
+        solution = solve_cpsat(
+            built.program,
+            warm_start=warm_start or None,
+            config=CpSatConfig(time_limit_s=10.0, workers=1),
+        )
         named_values = {
-            name: result.solution.variable_values[node_id]
+            name: solution.variable_values[node_id]
             for name, node_id in built.variable_node_ids.items()
         }
         steps.append(
@@ -55,7 +59,7 @@ def run_rolling_cp_sat(config: Any, model_input: Any) -> RollingWindowResult:
                 window_index=k,
                 modeling_period=modeling_period,
                 named_values=named_values,
-                objective_values=dict(result.solution.objective_values),
+                objective_values=dict(solution.objective_values),
                 summary=built.summary(),
             )
         )

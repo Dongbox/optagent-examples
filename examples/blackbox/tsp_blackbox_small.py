@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import HeuristicStrategy, ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import ExternalCallbackContext, ModelBuilder, SolveOptions, TabuConfig, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -24,31 +24,24 @@ def route_cost(order: list[int]) -> int:
 
 
 def main() -> None:
-    builder = ModelBuilder(metadata={"case": "tsp_blackbox_small"})
+    builder = ModelBuilder(metadata={"case": "tsp_blackbox_tabu"})
     route = builder.sequence_var(size=4, default=[3, 2, 1, 0], name="route")
-    builder.minimize(builder.external_call(route_cost, route, name="route_cost"), name="tour_length")
-    program = builder.freeze()
 
-    result = Orchestrator().run(
-        program,
-        config=OrchestratorConfig(
-            total_budget_iterations=60,
-            phases=[
-                PhaseConfig(
-                    name="heuristic_tsp_blackbox",
-                    solver=OrchestratorSolver.HEURISTIC,
-                    budget_iterations=60,
-                    strategy=HeuristicStrategy.TABU,
-                )
-            ],
+    def route_cost_ctx(ctx: ExternalCallbackContext) -> int:
+        return route_cost([int(index) for index in ctx.value(route)])
+
+    builder.minimize(builder.external_call(route_cost_ctx, name="route_cost"), name="tour_length")
+    solution = solve(
+        builder.freeze(),
+        options=SolveOptions(
+            strategy=TabuConfig(max_iterations=80, tabu_tenure=6),
+            seed=11,
+            time_limit_s=10.0,
+            log_level="off",
+            trace_output="summary",
         ),
     )
-
-    print_solution(
-        "small TSP solved as blackbox route optimization",
-        result.final_solution,
-        extra={"distance_matrix": DIST},
-    )
+    print_solution("small TSP blackbox route solved by TabuConfig", solution, extra={"distance_matrix": DIST})
 
 
 if __name__ == "__main__":

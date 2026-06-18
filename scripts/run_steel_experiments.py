@@ -5,104 +5,93 @@ import argparse
 import json
 from pathlib import Path
 import sys
-from typing import Any, Iterable
+from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "examples"))
 
 from optagent.benchmark_cli import parse_seeds, write_json_output
-from steel.run_blackbox import solve_instance, steel_instances, summarize_run
+from steel.steel_sequence_external import load_steel_instances, solve_sequence_external
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    instances = load_steel_instances()
     parser = argparse.ArgumentParser(
-        description="Run repeatable steel blackbox experiments across one instance/mode combination.",
+        description="Run repeatable steel sequence/external GA-vs-ALNS comparisons across one instance.",
     )
-    parser.add_argument("--instance", choices=tuple(steel_instances().keys()), default="bundled_head40")
-    parser.add_argument("--mode", choices=("preset", "evolutionary", "tabu"), default="preset")
+    parser.add_argument("--instance", choices=tuple(instances), default="bundled_head40")
     parser.add_argument(
         "--seed",
         action="append",
         dest="seeds",
         help="Random seed. Repeat the flag or provide a comma-separated list. Default: 0.",
     )
-    parser.add_argument("--budget-iterations", type=int, default=120)
-    parser.add_argument("--generation-limit", type=int, default=12)
+    parser.add_argument("--max-iterations", type=int, default=120)
+    parser.add_argument("--population-size", type=int, default=12)
+    parser.add_argument("--time-limit-s", type=float, default=30.0)
     parser.add_argument("--json", action="store_true", help="Print the full experiment payload as JSON.")
     parser.add_argument("--json-output", type=Path, help="Optional path to write the full experiment payload as JSON.")
     return parser
 
 
-def _aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
-    best_objective = min(run["best_objective"] for run in runs)
-    baseline_objective = runs[0]["baseline_objective"]
-    improvements = [run["improvement"] for run in runs]
-    return {
-        "run_count": len(runs),
-        "baseline_objective": baseline_objective,
-        "best_objective": best_objective,
-        "mean_best_objective": sum(run["best_objective"] for run in runs) / len(runs),
-        "max_improvement": max(improvements),
-        "mean_improvement": sum(improvements) / len(runs),
-        "improved_run_count": sum(1 for run in runs if run["improved"]),
-        "improved_rate": sum(1 for run in runs if run["improved"]) / len(runs),
-    }
-
-
 def _payload(
     *,
     instance_name: str,
-    mode: str,
     seeds: tuple[int, ...],
-    budget_iterations: int,
-    generation_limit: int,
-) -> dict[str, Any]:
-    instance = steel_instances()[instance_name]
+    max_iterations: int,
+    population_size: int,
+    time_limit_s: float,
+) -> dict[str, object]:
+    instance = load_steel_instances()[instance_name]
     runs = [
-        summarize_run(
-            solve_instance(
-                instance=instance,
-                mode=mode,
-                budget_iterations=budget_iterations,
-                generation_limit=generation_limit,
-                seed=seed,
-            )
+        solve_sequence_external(
+            instance=instance,
+            seed=seed,
+            max_iterations=max_iterations,
+            population_size=population_size,
+            time_limit_s=time_limit_s,
         )
         for seed in seeds
     ]
+    best_objective = min(run["best_objective"] for run in runs)
+    best_counts = {
+        strategy: sum(1 for run in runs if run["best_strategy"] == strategy)
+        for strategy in sorted({run["best_strategy"] for run in runs})
+    }
     return {
         "instance": instance.name,
-        "mode": mode,
         "seeds": list(seeds),
-        "budget_iterations": budget_iterations,
-        "generation_limit": generation_limit,
-        "aggregate": _aggregate_runs(runs),
+        "max_iterations": max_iterations,
+        "population_size": population_size,
+        "time_limit_s": time_limit_s,
+        "aggregate": {
+            "run_count": len(runs),
+            "best_objective": best_objective,
+            "mean_best_objective": sum(run["best_objective"] for run in runs) / len(runs),
+            "best_strategy_counts": best_counts,
+        },
         "runs": runs,
     }
 
 
-def _print_human_summary(payload: dict[str, Any]) -> None:
+def _print_human_summary(payload: dict[str, object]) -> None:
     aggregate = payload["aggregate"]
+    assert isinstance(aggregate, dict)
     print(f"instance: {payload['instance']}")
-    print(f"mode: {payload['mode']}")
     print(f"seeds: {', '.join(str(seed) for seed in payload['seeds'])}")
-    print(f"baseline_objective: {aggregate['baseline_objective']}")
     print(f"best_objective: {aggregate['best_objective']}")
     print(f"mean_best_objective: {aggregate['mean_best_objective']:.4f}")
-    print(f"max_improvement: {aggregate['max_improvement']}")
-    print(f"mean_improvement: {aggregate['mean_improvement']:.4f}")
-    print(f"improved_rate: {aggregate['improved_rate']:.2f}")
+    print(f"best_strategy_counts: {aggregate['best_strategy_counts']}")
 
 
 def main(argv: Iterable[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
-    seeds = parse_seeds(args.seeds)
     payload = _payload(
         instance_name=args.instance,
-        mode=args.mode,
-        seeds=seeds,
-        budget_iterations=args.budget_iterations,
-        generation_limit=args.generation_limit,
+        seeds=parse_seeds(args.seeds),
+        max_iterations=args.max_iterations,
+        population_size=args.population_size,
+        time_limit_s=args.time_limit_s,
     )
 
     if args.json_output is not None:

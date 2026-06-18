@@ -1,35 +1,17 @@
 # Scheduling Examples
 
-This directory contains examples for sequence-and-interval scheduling models that lower through `CanonicalCpModel`.
+Scheduling examples use sequence and interval semantics that are best handled by
+CP-SAT.
 
-## Supported modeling style
+Use direct CP-SAT APIs:
 
-Typical primitives:
+```python
+solution = solve_cpsat(program, config=CpSatConfig(time_limit_s=10, workers=1))
+```
 
-* `sequence_var(...)`
-* `interval_var(...)`
-* `no_overlap(...)`
-* `precedence(...)`
-* `interval_end(...)`
+Included examples:
 
-## Supported solve forms
-
-Logical solver family:
-
-* `PhaseConfig(..., solver=OrchestratorSolver.CP_SAT)`
-
-Concrete backend:
-
-* `solver=OrchestratorSolver.CP_SAT_NATIVE`
-
-Routing controls:
-
-* `required_backend=ExactBackendName.CP_SAT_NATIVE`
-* `strict_backend=True`
-
-## Included examples
-
-* [flow_shop_cp_sat.py](../scheduling/flow_shop_cp_sat.py)
-  Shows a tiny ordered flow-shop style schedule solved by `cp_sat_native`.
-* [job_shop_small.py](../scheduling/job_shop_small.py)
-  Shows a small job shop with two machines, precedence chains and CP-SAT native routing.
+- [flow_shop_cp_sat.py](../scheduling/flow_shop_cp_sat.py)
+  Ordered flow-shop style scheduling solved by CP-SAT.
+- [job_shop_small.py](../scheduling/job_shop_small.py)
+  Small job shop with machine capacity and precedence constraints.

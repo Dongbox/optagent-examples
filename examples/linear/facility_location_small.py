@@ -3,16 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import MilpConfig, ModelBuilder, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from _common import print_solution
 
 
-def main() -> None:
+def build_model() -> tuple[object, dict[str, object]]:
     builder = ModelBuilder(metadata={"case": "facility_location_small"})
-
     open_cost = {"north": 6, "south": 5}
     service_cost = {
         ("north", "alpha"): 2,
@@ -55,24 +54,16 @@ def main() -> None:
         + (assign_south_gamma * service_cost[("south", "gamma")]),
         name="total_cost",
     )
-    program = builder.freeze()
+    return builder.freeze(), {
+        "open_cost": open_cost,
+        "service_cost": {f"{facility}:{customer}": cost for (facility, customer), cost in service_cost.items()},
+    }
 
-    result = Orchestrator().run(
-        program,
-        config=OrchestratorConfig(
-            phases=[PhaseConfig(name="default_facility_location", solver=OrchestratorSolver.MILP, budget_iterations=20)],
-        ),
-    )
 
-    print_solution(
-        "facility location solved by default milp family routing",
-        result.final_solution,
-        extra={
-            "open_cost": open_cost,
-            "service_cost": {f"{facility}:{customer}": cost for (facility, customer), cost in service_cost.items()},
-            "note": "This example uses solver='milp' without forcing a concrete backend.",
-        },
-    )
+def main() -> None:
+    program, data = build_model()
+    solution = solve_milp(program, config=MilpConfig(backend="optx", time_limit_s=10.0))
+    print_solution("facility location solved by internal OptX MP backend", solution, extra=data)
 
 
 if __name__ == "__main__":

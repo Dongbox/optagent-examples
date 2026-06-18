@@ -11,8 +11,8 @@ metadata, and wires the blackbox scorer into the objective.
 from dataclasses import dataclass
 from typing import Any
 
-from optagent import ModelBuilder
-from optagent.heuristic.sequence_adjacency import greedy_construct_sequence
+from optagent import ExternalCallbackContext, ModelBuilder
+from optagent.search.sequence_adjacency import greedy_construct_sequence
 
 from .rules import _connectable, build_penalty_matrix, score_sequence_external
 from mg.program.scripts.preprocess.data import MGCase
@@ -168,27 +168,24 @@ def build_mg_program(case: MGCase, *, use_constructive_default: bool = False) ->
             "structured_model_status": "edge_metadata_plus_blackbox_objective",
             "sequence_break_window": 24,
         },
-        solve_config={
-            "heuristic_time_limit_seconds": 5.0,
-            "heuristic_max_candidate_moves": 64,
-            "heuristic_max_scalar_variables": 0,
-        },
     )
     sequence = builder.sequence_var(
         size=len(case.tasks),
         default=default_sequence,
         name="mg_order_sequence",
     )
-    case_const = builder.const(case)
+
+    def mg_rule_score(ctx: ExternalCallbackContext) -> float:
+        candidate_sequence = [int(index) for index in ctx.value(sequence)]
+        return score_sequence_external(candidate_sequence, case)
+
     # The sequence variable is passed into an external scorer so every candidate
     # evaluated by OptAgent is scored with the latest sequence value.
     builder.minimize(
         builder.external_call(
-            score_sequence_external,
-            sequence,
-            case_const,
+            mg_rule_score,
             name="mg_rule_score",
-            cache=False,
+            cacheable=False,
         ),
         name="mg_rule_cost",
     )

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 """OptAgent search configuration and execution for MG sequencing.
 
-This module is the solving layer. It converts MG search modes into OptAgent
-orchestrator configs, runs one or more mode/seed attempts, and returns the best
-sequence with solver traces. It does not read/write SQLite and does not build
-parity or migration reports; those responsibilities live in `reports.py`.
+This module is the solving layer. It maps coarse MG search modes to the current
+solve-first OptAgent API, runs one or more mode/seed attempts, and returns the
+best sequence with a compact metadata trace. It does not read/write SQLite and
+does not build parity or migration reports; those responsibilities live in
+`reports.py`.
 """
 
 from dataclasses import asdict, dataclass
@@ -14,20 +15,13 @@ from time import perf_counter
 from typing import Any, Iterable
 
 from optagent import (
-    EvolutionaryConfig,
-    HeuristicOrchestrationConfig,
-    HeuristicPhaseConfig,
-    HeuristicPhaseKind,
-    HeuristicStrategy,
-    HeuristicTerminationConfig,
-    HeuristicTerminationMode,
-    LocalImprovementTrigger,
-    MutationStrategy,
-    Orchestrator,
-    OrchestratorConfig,
-    OrchestratorSolver,
-    PhaseConfig,
-    ProgressEvent,
+    GaConfig,
+    LnsConfig,
+    SolveOptions,
+    StrategyConfig,
+    TabuConfig,
+    UnifiedSolution,
+    solve,
 )
 
 from .model import build_mg_program
@@ -64,6 +58,27 @@ class MGSearchRun:
     mutation_trials: dict[str, int]
 
 
+@dataclass(frozen=True)
+class MGStrategyRunConfig:
+    """Current solve-first configuration for one MG mode.
+
+    The progress/logging fields are retained as data so existing example
+    reports can show the selected mode and operator-facing logging intent.
+    """
+
+    mode: str
+    seed: int
+    budget_iterations: int
+    generation_limit: int
+    strategy: StrategyConfig
+    options: SolveOptions
+    progress_logging: bool = False
+    progress_log_level: int | None = None
+    progress_mode: str = ""
+    heuristic_cost_logging: bool = True
+    heuristic_cost_logging_policy: str = "improved"
+
+
 def build_mg_config(
     *,
     mode: str,
@@ -75,128 +90,52 @@ def build_mg_config(
     progress_callback: Any | None = None,
     heuristic_cost_logging: bool = True,
     heuristic_cost_logging_policy: str = "improved",
-) -> OrchestratorConfig:
-    """Map an MG search mode to a compact OptAgent orchestration config.
+) -> MGStrategyRunConfig:
+    """Map an MG search mode to a compact solve-first OptAgent config.
 
     The modes are deliberately coarse because the production `main.py` should
-    not expose low-level tuning flags. Migration diagnostics can still call this
+    not expose low-level tuning flags. Diagnostics can still call this
     module directly with custom budgets when comparing profiles.
     """
 
-    progress_kwargs: dict[str, Any] = {
-        "progress_logging": progress_logging,
-        "progress_mode": mode,
-        "heuristic_cost_logging": heuristic_cost_logging,
-        "heuristic_cost_logging_policy": heuristic_cost_logging_policy,
-    }
-    if progress_log_level is not None:
-        progress_kwargs["progress_log_level"] = progress_log_level
-    if progress_callback is not None:
-        progress_kwargs["progress_callback"] = progress_callback
-
     if mode == "tabu":
-        # Fast local search around the warm-start sequence. This is the default
-        # low-overhead replacement for the original GA's local improvement loop.
-        return OrchestratorConfig(
-            seed=seed,
-            total_budget_iterations=budget_iterations,
-            **progress_kwargs,
-            phases=[
-                PhaseConfig(
-                    name="mg_sequence_tabu",
-                    solver=OrchestratorSolver.HEURISTIC,
-                    budget_iterations=budget_iterations,
-                    strategy=HeuristicStrategy.TABU,
-                )
-            ],
+        strategy: StrategyConfig = TabuConfig(
+            max_iterations=budget_iterations,
+            tabu_tenure=max(4, min(20, budget_iterations // 2 or 4)),
         )
-    if mode == "polish":
-        # Intensify first, then diversify with a short annealing/LNS phase. This
-        # is useful when the default sequence is plausible but has local defects.
-        return OrchestratorConfig(
-            seed=seed,
-            total_budget_iterations=budget_iterations,
-            **progress_kwargs,
-            phases=[
-                PhaseConfig(
-                    name="mg_repair",
-                    solver=OrchestratorSolver.HEURISTIC,
-                    budget_iterations=budget_iterations,
-                    heuristic_plan=HeuristicOrchestrationConfig(
-                        phases=[
-                            HeuristicPhaseConfig(
-                                name="mg_tabu_intensify",
-                                kind=HeuristicPhaseKind.INTENSIFY,
-                                strategy=HeuristicStrategy.TABU,
-                                enable_lns=True,
-                                lns_every=5,
-                                lns_destroy_count=2,
-                                termination=HeuristicTerminationConfig(
-                                    mode=HeuristicTerminationMode.UNIMPROVED_ITERATIONS,
-                                    unimproved_iterations=max(16, budget_iterations // 2),
-                                ),
-                            ),
-                            HeuristicPhaseConfig(
-                                name="mg_annealing_diversify",
-                                kind=HeuristicPhaseKind.DIVERSIFY,
-                                strategy=HeuristicStrategy.ANNEALING,
-                                enable_lns=True,
-                                lns_every=5,
-                                lns_destroy_count=3,
-                                termination=HeuristicTerminationConfig(
-                                    iteration_limit=max(8, budget_iterations // 4),
-                                ),
-                            ),
-                        ]
-                    ),
-                )
-            ],
+    elif mode == "polish":
+        strategy = LnsConfig(
+            max_iterations=budget_iterations,
+            destroy_count=2,
+            lns_every=2,
         )
-    # Evolutionary mode is the closest conceptual replacement for the APS GA:
-    # maintain a population, use sequence mutations, and run a light tabu polish
-    # only on improving candidates.
-    return OrchestratorConfig(
+    else:
+        strategy = GaConfig(
+            max_iterations=max(budget_iterations, generation_limit),
+            population_size=8,
+            mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
+            local_improvement_strategy="tabu",
+            local_improvement_top_k=1,
+        )
+    options = SolveOptions(
+        strategy=strategy,
+        max_iterations=budget_iterations,
         seed=seed,
-        total_budget_iterations=budget_iterations,
-        **progress_kwargs,
-        phases=[
-            PhaseConfig(
-                name="mg_sequence_evolutionary",
-                solver=OrchestratorSolver.HEURISTIC,
-                budget_iterations=budget_iterations,
-                heuristic_plan=HeuristicOrchestrationConfig(
-                    phases=[],
-                    evolutionary_plan=EvolutionaryConfig(
-                        population_size=16,
-                        elite_size=4,
-                        generation_limit=generation_limit,
-                        stagnation_generations=4,
-                        mutation=MutationStrategy.SEQUENCE_TWO_OPT,
-                        mutation_portfolio=(
-                            MutationStrategy.SEQUENCE_BLOCK_MOVE,
-                            MutationStrategy.RUIN_AND_REPAIR,
-                            MutationStrategy.RANDOM_SWAP,
-                        ),
-                        adaptive_mutation=True,
-                        local_improvement_trigger=LocalImprovementTrigger.IMPROVING_ONLY,
-                        local_improvement_top_k=1,
-                        local_improvement_plan=HeuristicOrchestrationConfig(
-                            phases=[
-                                HeuristicPhaseConfig(
-                                    name="mg_memetic_tabu_light",
-                                    kind=HeuristicPhaseKind.INTENSIFY,
-                                    strategy=HeuristicStrategy.TABU,
-                                    termination=HeuristicTerminationConfig(
-                                        mode=HeuristicTerminationMode.UNIMPROVED_ITERATIONS,
-                                        unimproved_iterations=12,
-                                    ),
-                                )
-                            ]
-                        ),
-                    ),
-                ),
-            )
-        ],
+        log_level="summary" if progress_logging else "off",
+        trace_output="summary",
+    )
+    return MGStrategyRunConfig(
+        mode=mode,
+        seed=seed,
+        budget_iterations=budget_iterations,
+        generation_limit=generation_limit,
+        strategy=strategy,
+        options=options,
+        progress_logging=progress_logging,
+        progress_log_level=progress_log_level,
+        progress_mode=mode,
+        heuristic_cost_logging=heuristic_cost_logging,
+        heuristic_cost_logging_policy=heuristic_cost_logging_policy,
     )
 
 
@@ -222,14 +161,10 @@ def parse_csv_modes(value: str | Iterable[str]) -> list[str]:
     return modes
 
 
-def _sequence_from_result(result: Any, sequence_node_id: int) -> list[int]:
+def _sequence_from_result(result: UnifiedSolution, sequence_node_id: int) -> list[int]:
     """Extract the final sequence variable value from an OptAgent result."""
 
-    return [int(index) for index in result.final_solution.variable_values[sequence_node_id]]
-
-
-def _trace_tail(traces: list[Any], *, limit: int = 3) -> list[dict[str, Any]]:
-    return [asdict(trace) for trace in traces[-limit:]]
+    return [int(index) for index in result.variable_values[sequence_node_id]]
 
 
 def _run_score_curve(
@@ -237,7 +172,7 @@ def _run_score_curve(
     mode: str,
     seed: int,
     baseline_cost: float,
-    result: Any,
+    result: UnifiedSolution,
     final_cost: float,
 ) -> list[dict[str, Any]]:
     curve = [
@@ -250,47 +185,17 @@ def _run_score_curve(
         }
     ]
     step = 1
-    for trace in getattr(result, "solver_traces", []):
+    for trace in _metadata_trace(result):
         curve.append(
             {
                 "mode": mode,
                 "seed": seed,
                 "step": step,
                 "source": "phase",
-                "phase_name": trace.phase_name,
-                "solver_name": trace.solver_name,
-                "score": float(trace.score),
-                "feasible": bool(trace.feasible),
-            }
-        )
-        step += 1
-    for trace in getattr(result, "heuristic_subphase_traces", []):
-        curve.append(
-            {
-                "mode": mode,
-                "seed": seed,
-                "step": step,
-                "source": "subphase",
-                "phase_name": trace.phase_name,
-                "score": float(trace.score_after),
-                "best_score": float(trace.best_score_after),
-                "feasible": bool(trace.feasible),
-            }
-        )
-        step += 1
-    for trace in getattr(result, "evolutionary_generation_traces", []):
-        curve.append(
-            {
-                "mode": mode,
-                "seed": seed,
-                "step": step,
-                "source": "generation",
-                "generation": int(trace.generation),
-                "score": float(trace.best_score),
-                "mean_score": float(trace.mean_score),
-                "feasible": bool(trace.best_feasible),
-                "improved": bool(trace.improved),
-                "termination_reason": trace.termination_reason,
+                "phase_name": trace.get("phase_name", mode),
+                "solver_name": trace.get("solver_name", result.solver_name),
+                "score": trace.get("best_score", trace.get("score", final_cost)),
+                "feasible": trace.get("feasible", result.feasible),
             }
         )
         step += 1
@@ -301,50 +206,35 @@ def _run_score_curve(
             "step": step,
             "source": "final",
             "score": final_cost,
-            "feasible": bool(result.final_solution.feasible),
+            "feasible": bool(result.feasible),
         }
     )
     return curve
 
 
-def _progress_score_curve(
-    *,
-    mode: str,
-    seed: int,
-    events: list[ProgressEvent],
-    start_step: int,
-) -> list[dict[str, Any]]:
-    curve: list[dict[str, Any]] = []
-    step = start_step
-    for event in events:
-        if event.event_type != "heuristic_cost_updated":
-            continue
-        payload = dict(event.payload)
-        source = "accepted_move" if payload.get("accepted") else "move"
-        curve.append(
-            {
-                "mode": mode,
-                "seed": seed,
-                "step": step,
-                "source": source,
-                "phase_name": event.phase_name,
-                "iteration": payload.get("iteration"),
-                "score": payload.get("score"),
-                "best_score": payload.get("best_score"),
-                "objective_score": payload.get("objective_score"),
-                "penalty_score": payload.get("penalty_score"),
-                "accepted": payload.get("accepted"),
-                "improved_best": payload.get("improved_best"),
-                "move_kind": payload.get("move_kind"),
-                "node_id": payload.get("node_id"),
-                "feasible": payload.get("feasible"),
-                "strategy": payload.get("strategy"),
-                "portfolio_round": payload.get("portfolio_round"),
-                "worker_index": payload.get("worker_index"),
-            }
-        )
-        step += 1
-    return curve
+def _metadata_trace(result: UnifiedSolution) -> list[dict[str, Any]]:
+    trace = result.metadata.get("trace")
+    if isinstance(trace, list):
+        return [dict(entry) for entry in trace if isinstance(entry, dict)]
+    return []
+
+
+def _solver_trace_summary(result: UnifiedSolution, *, mode: str, final_cost: float) -> list[dict[str, Any]]:
+    traces = _metadata_trace(result)
+    if traces:
+        return traces
+    return [
+        {
+            "phase_name": mode,
+            "solver_name": result.solver_name,
+            "status": result.status.value,
+            "feasible": result.feasible,
+            "score": final_cost,
+            "strategy": result.metadata.get("strategy", mode),
+            "iterations": result.metadata.get("iterations"),
+            "termination_reason": result.metadata.get("termination_reason"),
+        }
+    ]
 
 
 def _summarize_run(
@@ -353,7 +243,7 @@ def _summarize_run(
     baseline_cost: float,
     mode: str,
     seed: int,
-    result: Any,
+    result: UnifiedSolution,
     sequence: list[int],
     runtime_seconds: float,
 ) -> MGSearchRun:
@@ -365,21 +255,25 @@ def _summarize_run(
         seed=seed,
         total_cost=score.total_cost,
         improvement_vs_baseline=round(baseline_cost - score.total_cost, 6),
-        feasible=bool(result.final_solution.feasible),
-        status=str(result.final_solution.status.value),
+        feasible=bool(result.feasible),
+        status=str(result.status.value),
         runtime_seconds=round(runtime_seconds, 6),
         active_count=len(score.active_sequence),
         inactive_count=len(score.inactive_sequence),
         sequence=list(sequence),
         sequence_head=list(sequence[:30]),
         grouped_rule_costs=group_rule_costs(score.breakdown),
-        solver_trace_count=len(result.solver_traces),
-        generation_trace_count=len(result.evolutionary_generation_traces),
-        heuristic_subphase_trace_count=len(result.heuristic_subphase_traces),
-        solver_traces=[asdict(trace) for trace in result.solver_traces],
-        generation_trace_tail=_trace_tail(result.evolutionary_generation_traces),
-        mutation_successes=dict(getattr(result, "mutation_successes", {})),
-        mutation_trials=dict(getattr(result, "mutation_trials", {})),
+        solver_trace_count=max(1, int(result.metadata.get("trace_entry_count", len(_metadata_trace(result))) or 0)),
+        generation_trace_count=int(result.metadata.get("generations", 0) or 0),
+        heuristic_subphase_trace_count=0,
+        solver_traces=_solver_trace_summary(result, mode=mode, final_cost=score.total_cost),
+        generation_trace_tail=[],
+        mutation_successes=dict(result.metadata.get("mutation_successes", {}))
+        if isinstance(result.metadata.get("mutation_successes"), dict)
+        else {},
+        mutation_trials=dict(result.metadata.get("mutation_trials", {}))
+        if isinstance(result.metadata.get("mutation_trials"), dict)
+        else {},
     )
 
 
@@ -415,11 +309,6 @@ def solve_mg_sequence(
     score_curve: list[dict[str, Any]] = []
     for mode in selected_modes:
         for seed in selected_seeds:
-            progress_events: list[ProgressEvent] = []
-
-            def collect_progress(event: ProgressEvent) -> None:
-                progress_events.append(event)
-
             # Each mode/seed pair is an independent solve attempt over the same
             # frozen OptAgent program. This makes comparison deterministic and
             # keeps production best-run selection auditable.
@@ -431,20 +320,18 @@ def solve_mg_sequence(
                     baseline_score.total_cost,
                 )
             start = perf_counter()
-            result = Orchestrator().run(
-                built.program,
-                config=build_mg_config(
-                    mode=mode,
-                    budget_iterations=budget_iterations,
-                    generation_limit=generation_limit,
-                    seed=seed,
-                    progress_logging=progress_logging,
-                    progress_log_level=progress_log_level,
-                    progress_callback=collect_progress,
-                    heuristic_cost_logging=heuristic_cost_logging,
-                    heuristic_cost_logging_policy=heuristic_cost_logging_policy,
-                ),
+            config = build_mg_config(
+                mode=mode,
+                budget_iterations=budget_iterations,
+                generation_limit=generation_limit,
+                seed=seed,
+                progress_logging=progress_logging,
+                progress_log_level=progress_log_level,
+                progress_callback=None,
+                heuristic_cost_logging=heuristic_cost_logging,
+                heuristic_cost_logging_policy=heuristic_cost_logging_policy,
             )
+            result = solve(built.program, options=config.options)
             runtime_seconds = perf_counter() - start
             sequence = _sequence_from_result(result, built.sequence_node_id)
             run = _summarize_run(
@@ -464,16 +351,6 @@ def solve_mg_sequence(
                 result=result,
                 final_cost=run.total_cost,
             )
-            move_curve = _progress_score_curve(
-                mode=mode,
-                seed=seed,
-                events=progress_events,
-                start_step=1,
-            )
-            if move_curve:
-                run_curve = [run_curve[0], *move_curve, *run_curve[1:]]
-                for step, point in enumerate(run_curve):
-                    point["step"] = step
             score_curve.extend(run_curve)
 
     sorted_runs = sorted(runs, key=lambda run: (run.total_cost, run.runtime_seconds, run.mode, run.seed))

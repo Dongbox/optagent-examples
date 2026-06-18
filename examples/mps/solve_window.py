@@ -7,7 +7,7 @@ import sys
 from time import perf_counter
 from typing import Any
 
-from optagent import ExactBackendName, Orchestrator, load_strategy_preset
+from optagent import GaConfig, MilpConfig, SolveOptions, solve, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -15,31 +15,24 @@ from mps.mps_builder import build_program_from_mps
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build OptAgent models from MPS windows and solve them through heuristic, hybrid, or exact OptAgent presets.")
+    parser = argparse.ArgumentParser(description="Build an OptAgent model from an MPS window and solve it with current direct APIs.")
     parser.add_argument("--window", type=int, choices=range(6), help="Window index in examples/mps/window_<idx>.mps")
     parser.add_argument("--mps-file", type=Path, help="Explicit MPS file path. Overrides --window when provided.")
     parser.add_argument(
         "--mode",
-        choices=["heuristic", "hybrid", "exact"],
-        default="heuristic",
-        help="Solve mode. Defaults to heuristic to exercise the OptAgent heuristic path.",
+        choices=["exact", "heuristic"],
+        default="exact",
+        help="exact uses solve_milp; heuristic uses solve(...) with GaConfig for smoke-scale MPS experiments.",
     )
     parser.add_argument(
         "--backend",
-        choices=["auto", ExactBackendName.MATHOPT_MP.value, ExactBackendName.HIGHS_NATIVE.value],
-        default="auto",
-        help="Concrete MP backend override for exact-capable modes. Default routes through the milp family registry.",
+        choices=["optx", "mathopt_mp"],
+        default="optx",
+        help="MP backend for exact mode. optx is the internal backend; mathopt_mp demonstrates the external adapter.",
     )
-    parser.add_argument(
-        "--preset",
-        type=Path,
-        help="Explicit external preset file. When omitted, a built-in examples/mps preset is selected from --mode.",
-    )
-    parser.add_argument(
-        "--summary-only",
-        action="store_true",
-        help="Build the OptAgent program and print model summary without calling the solver.",
-    )
+    parser.add_argument("--summary-only", action="store_true", help="Build the program and print model summary without solving.")
+    parser.add_argument("--time-limit-s", type=float, default=10.0)
+    parser.add_argument("--seed", type=int, default=11)
     return parser.parse_args()
 
 
@@ -51,62 +44,77 @@ def resolve_mps_path(args: argparse.Namespace) -> Path:
     return Path(__file__).with_name(f"window_{args.window}.mps")
 
 
+def _nonzero_sample(variable_values: dict[int, Any], variable_node_ids: dict[str, int]) -> dict[str, Any]:
+    nonzero: dict[str, Any] = {}
+    for name, node_id in variable_node_ids.items():
+        value = variable_values.get(node_id)
+        if isinstance(value, bool):
+            if value:
+                nonzero[name] = value
+        elif isinstance(value, (int, float)) and abs(float(value)) > 1e-9:
+            nonzero[name] = value
+    return dict(list(sorted(nonzero.items()))[:25])
+
+
 def main() -> None:
     args = parse_args()
     mps_path = resolve_mps_path(args)
-    preferred_backend = None if args.backend == "auto" else args.backend
 
     build_start = perf_counter()
-    built = build_program_from_mps(mps_path, preferred_backend=preferred_backend)
+    built = build_program_from_mps(mps_path, preferred_backend=args.backend if args.mode == "exact" else None)
     build_seconds = perf_counter() - build_start
 
     payload: dict[str, Any] = {
         "title": "optagent mps window",
         "mps_path": str(mps_path),
         "mode": args.mode,
+        "backend": args.backend,
         "build_seconds": round(build_seconds, 3),
         "model_summary": built.summary(),
-        "requested_backend": args.backend,
     }
     if args.summary_only:
         print(json.dumps(payload, indent=2, ensure_ascii=True))
         return
 
-    preset_path = args.preset or _default_preset_path(args.mode)
-    preset = load_strategy_preset(preset_path, program=built.program)
     solve_start = perf_counter()
-    result = Orchestrator().run(built.program, preset=preset)
+    if args.mode == "exact":
+        solution = solve_milp(
+            built.program,
+            config=MilpConfig(
+                backend=args.backend,
+                time_limit_s=args.time_limit_s,
+            ),
+        )
+    else:
+        solution = solve(
+            built.program,
+            options=SolveOptions(
+                strategy=GaConfig(
+                    max_iterations=40,
+                    population_size=8,
+                    mutation_count=2,
+                    mutation_portfolio=("random_reset", "random_swap"),
+                ),
+                seed=args.seed,
+                time_limit_s=args.time_limit_s,
+                log_level="off",
+                trace_output="summary",
+            ),
+        )
     solve_seconds = perf_counter() - solve_start
-    solution = result.final_solution
-
-    nonzero_variables = {
-        name: value
-        for name, value in solution.variable_values.items()
-        if isinstance(value, (int, float)) and abs(float(value)) > 1e-9
-    }
-    sample_nonzero = dict(list(sorted(nonzero_variables.items()))[:25])
 
     payload.update(
         {
             "solve_seconds": round(solve_seconds, 3),
-            "selected_preset": result.selected_preset_name,
-            "selected_preset_source": result.selected_preset_source,
-            "preset_path": str(preset_path),
             "solver_name": solution.solver_name,
             "status": solution.status.value,
             "feasible": solution.feasible,
             "objective_values": solution.objective_values,
             "solution_metadata": solution.metadata,
-            "nonzero_variable_count": len(nonzero_variables),
-            "nonzero_variable_sample": sample_nonzero,
+            "nonzero_variable_sample": _nonzero_sample(solution.variable_values, built.variable_node_ids),
         }
     )
-def _default_preset_path(mode: str) -> Path:
-    if mode == "exact":
-        return Path(__file__).with_name("resource_flow_exact_preset.json")
-    if mode == "hybrid":
-        return Path(__file__).with_name("resource_flow_hybrid_preset.json")
-    return Path(__file__).with_name("resource_flow_heuristic_preset.json")
+    print(json.dumps(payload, indent=2, ensure_ascii=True))
 
 
 if __name__ == "__main__":

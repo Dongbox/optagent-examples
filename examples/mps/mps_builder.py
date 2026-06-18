@@ -162,9 +162,6 @@ def build_program_from_mps(
 ) -> BuiltMpsProgram:
     parsed = parse_mps(path, objective_sense=objective_sense)
     summary = parsed.summary()
-    solve_config: dict[str, Any] = {}
-    if preferred_backend:
-        solve_config["preferred_backend"] = preferred_backend
 
     builder = ModelBuilder(
         metadata={
@@ -172,8 +169,8 @@ def build_program_from_mps(
             "source_format": "mps",
             "problem_family": "linear_mip",
             "nonzero_count": summary["nonzero_count"],
+            **({"preferred_backend": preferred_backend} if preferred_backend else {}),
         },
-        solve_config=solve_config,
     )
     const_cache: dict[float, Any] = {}
     variables: dict[str, Any] = {}

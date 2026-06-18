@@ -2,20 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import json
 
-from optagent import ExactBackendName, ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import MilpConfig, ModelBuilder, exact_backend_registry, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from _common import print_solution
 
 
-def main() -> None:
-    builder = ModelBuilder(
-        metadata={"case": "assignment_highs_native"},
-        solve_config={"preferred_backend": "highs_native"},
-    )
-
+def build_model() -> tuple[object, dict[str, object]]:
+    builder = ModelBuilder(metadata={"case": "assignment_optx"})
     profit = {
         "a_x": 8,
         "a_y": 6,
@@ -36,22 +33,35 @@ def main() -> None:
         (a_x * profit["a_x"]) + (a_y * profit["a_y"]) + (b_x * profit["b_x"]) + (b_y * profit["b_y"]),
         name="profit",
     )
-    program = builder.freeze()
+    return builder.freeze(), {"profit": profit}
 
-    result = Orchestrator().run(
+
+def main() -> None:
+    program, data = build_model()
+    optx_backend = exact_backend_registry()["optx"].backend
+    if not optx_backend.is_available():
+        print(
+            json.dumps(
+                {
+                    "title": "assignment solved by internal OptX MP backend",
+                    "status": "skipped",
+                    "backend": "optx",
+                    "reason": optx_backend.availability_error(),
+                    "extra": data,
+                },
+                indent=2,
+                ensure_ascii=True,
+            )
+        )
+        return
+    solution = solve_milp(
         program,
-        config=OrchestratorConfig(
-            required_backend=ExactBackendName.HIGHS_NATIVE,
-            strict_backend=True,
-            phases=[PhaseConfig(name="highs_assignment", solver=OrchestratorSolver.MILP, budget_iterations=20)],
+        config=MilpConfig(
+            backend="optx",
+            time_limit_s=10.0,
         ),
     )
-
-    print_solution(
-        "assignment solved by native HiGHS backend",
-        result.final_solution,
-        extra={"profit": profit},
-    )
+    print_solution("assignment solved by internal OptX MP backend", solution, extra=data)
 
 
 if __name__ == "__main__":

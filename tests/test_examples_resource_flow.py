@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import importlib.util
 from types import SimpleNamespace
 
-from optagent import CpSatSolver, MilpSolver, SolutionStatus
+from optagent import CpSatConfig, MilpConfig, SolutionStatus, exact_backend_registry, solve_cpsat, solve_milp
 
 from examples.resource_flow.case_loader import load_case
 from examples.resource_flow.cp_builder import advance_window_input, build_single_window_program, roll_named_warm_start
@@ -11,7 +10,7 @@ from examples.resource_flow.milp_builder import build_single_window_milp_program
 from examples.resource_flow.rolling import run_rolling_cp_sat
 
 
-HAS_MP_BACKEND = importlib.util.find_spec("ortools") is not None or importlib.util.find_spec("highspy") is not None
+OPTX_AVAILABLE = exact_backend_registry()["optx"].backend.is_available()
 
 
 def _tiny_case() -> tuple[SimpleNamespace, SimpleNamespace]:
@@ -98,12 +97,12 @@ def test_resource_flow_single_window_program_solves() -> None:
     assert len(built.variable_node_ids) > 0
     assert len(built.program.constraint_ids) > 0
 
-    result = CpSatSolver().solve(built.program)
+    solution = solve_cpsat(built.program, config=CpSatConfig(time_limit_s=10.0, workers=1))
 
-    assert result.solution.status in {SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE}
-    assert result.solution.feasible is True
+    assert solution.status in {SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE}
+    assert solution.feasible is True
     named_values = {
-        name: result.solution.variable_values[node_id]
+        name: solution.variable_values[node_id]
         for name, node_id in built.variable_node_ids.items()
     }
     assert named_values["x_d0_m1_n0_t1"] == 20
@@ -147,15 +146,15 @@ def test_resource_flow_bundled_milp_case_builds_summary() -> None:
 
 
 def test_resource_flow_single_window_milp_program_solves_when_backend_available() -> None:
-    if not HAS_MP_BACKEND:
+    if not OPTX_AVAILABLE:
         return
     config, model_input = _tiny_case()
     built = build_single_window_milp_program(config, model_input, modeling_period=1)
 
-    result = MilpSolver().solve(built.program)
+    solution = solve_milp(built.program, config=MilpConfig(backend="optx", time_limit_s=10.0))
 
-    assert result.solution.status in {SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE}
-    assert result.solution.feasible is True
+    assert solution.status in {SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE}
+    assert solution.feasible is True
 
 
 def test_resource_flow_rolling_helpers_shift_state_and_warm_start() -> None:

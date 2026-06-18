@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import importlib.util
-import json
 from pathlib import Path
 
 import pytest
 
-from optagent import Orchestrator, SolutionStatus, load_strategy_preset
+from optagent import GaConfig, MilpConfig, SolutionStatus, SolveOptions, exact_backend_registry, solve, solve_milp
 
 
-HAS_MP_BACKEND = importlib.util.find_spec("ortools") is not None or importlib.util.find_spec("highspy") is not None
+OPTX_AVAILABLE = exact_backend_registry()["optx"].backend.is_available()
 
 
 MPS_FIXTURE = """\
@@ -56,104 +54,42 @@ def test_parse_and_build_tiny_mps_model(tmp_path: Path) -> None:
     assert built.program.graph.nodes[float_node_id].metadata["family"] == "x"
 
 
-@pytest.mark.skipif(not HAS_MP_BACKEND, reason="requires optional dependency 'ortools' or 'highspy'")
-def test_tiny_mps_model_solves_through_external_preset(tmp_path: Path) -> None:
+@pytest.mark.skipif(not OPTX_AVAILABLE, reason="requires native OptX backend with embedded HiGHS support")
+def test_tiny_mps_model_solves_through_internal_exact_backend(tmp_path: Path) -> None:
     from examples.mps.mps_builder import build_program_from_mps
 
     mps_path = tmp_path / "tiny.mps"
     mps_path.write_text(MPS_FIXTURE, encoding="utf-8")
 
-    preset_path = tmp_path / "tiny_exact.json"
-    preset_path.write_text(
-        json.dumps(
-            {
-                "name": "tiny_exact",
-                "description": "Exact preset for tiny imported MPS models.",
-                "family": "exact",
-                "objective": "quality",
-                "tags": ["mps", "linear", "exact"],
-                "requirements": ["highspy_or_ortools_mp"],
-                "match": {
-                    "problem_type": "general",
-                    "has_linear": True,
-                    "has_blackbox": False,
-                    "has_scheduling": False,
-                },
-                "orchestrator_config": {
-                    "total_budget_iterations": 40,
-                    "phases": [
-                        {
-                            "name": "tiny_exact",
-                            "solver": "milp",
-                            "budget_iterations": 40,
-                            "fallback_on_failure": False,
-                            "fallback_on_stall": False,
-                        }
-                    ],
-                },
-            }
-        ),
-        encoding="utf-8",
-    )
-
     built = build_program_from_mps(mps_path)
-    preset = load_strategy_preset(preset_path, program=built.program)
-    result = Orchestrator().run(built.program, preset=preset)
-    solution = result.final_solution
+    solution = solve_milp(built.program, config=MilpConfig(backend="optx", time_limit_s=10.0))
 
     assert solution.status in {SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE}
     assert solution.feasible is True
     assert solution.objective_values
 
 
-def test_tiny_mps_model_solves_through_heuristic_preset(tmp_path: Path) -> None:
+def test_tiny_mps_model_solves_through_declared_strategy(tmp_path: Path) -> None:
     from examples.mps.mps_builder import build_program_from_mps
 
     mps_path = tmp_path / "tiny.mps"
     mps_path.write_text(MPS_FIXTURE, encoding="utf-8")
 
-    preset_path = tmp_path / "tiny_heuristic.json"
-    preset_path.write_text(
-        json.dumps(
-            {
-                "name": "tiny_heuristic",
-                "description": "Heuristic preset for tiny imported MPS models.",
-                "family": "heuristic",
-                "objective": "balanced",
-                "tags": ["mps", "linear", "heuristic"],
-                "match": {
-                    "problem_type": "general",
-                    "has_linear": True,
-                    "has_blackbox": False,
-                    "has_scheduling": False
-                },
-                "orchestrator_config": {
-                    "total_budget_iterations": 40,
-                    "phases": [
-                        {
-                            "name": "seed",
-                            "solver": "heuristic",
-                            "budget_iterations": 15,
-                            "strategy": "annealing",
-                            "restart_limit": 1
-                        },
-                        {
-                            "name": "intensify",
-                            "solver": "heuristic",
-                            "budget_iterations": 25,
-                            "strategy": "tabu",
-                            "restart_limit": 1
-                        }
-                    ]
-                }
-            }
+    built = build_program_from_mps(mps_path)
+    solution = solve(
+        built.program,
+        options=SolveOptions(
+            strategy=GaConfig(
+                max_iterations=20,
+                population_size=4,
+                mutation_portfolio=("random_reset", "random_swap"),
+            ),
+            max_iterations=20,
+            time_limit_s=5.0,
+            log_level="off",
+            trace_output="summary",
         ),
-        encoding="utf-8",
     )
 
-    built = build_program_from_mps(mps_path)
-    preset = load_strategy_preset(preset_path, program=built.program)
-    result = Orchestrator().run(built.program, preset=preset)
-
-    assert result.final_solution.objective_values
-    assert result.solver_traces
+    assert solution.objective_values
+    assert solution.metadata["strategy"] == "ga"

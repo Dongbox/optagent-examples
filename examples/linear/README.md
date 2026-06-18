@@ -1,43 +1,25 @@
 # Linear Examples
 
-This directory contains examples for linear and mixed-integer models that lower through `CanonicalMpModel`.
+Linear examples are algebraic LP/MIP models that lower through the MP exact path.
 
-## Supported modeling style
+Use direct exact APIs:
 
-Typical primitives:
+```python
+solution = solve_milp(program, config=MilpConfig(backend="optx"))
+```
 
-* `int_var(...)`
-* `float_var(...)`
-* arithmetic with `+`, `-`, `*`, `sum(...)`
-* linear constraints with `<=`, `==`, `>=`
-* scalar objective with `maximize(...)` / `minimize(...)`
+Backends shown here:
 
-## Supported solve forms
+- `optx`: internal embedded MP backend.
+- `mathopt_mp`: external OR-Tools MathOpt adapter.
 
-Logical solver family:
+Included examples:
 
-* `PhaseConfig(..., solver=OrchestratorSolver.MILP)`
-
-Concrete backend:
-
-* `solver=OrchestratorSolver.MATHOPT_MP`
-* `solver=OrchestratorSolver.HIGHS_NATIVE`
-
-Routing controls:
-
-* `required_backend=ExactBackendName.MATHOPT_MP`
-* `required_backend=ExactBackendName.HIGHS_NATIVE`
-* `allowed_backends=(...)`
-* `strict_backend=True`
-* `solve_config={"preferred_backend": "..."}`
-
-## Included examples
-
-* [knapsack_mathopt.py](../linear/knapsack_mathopt.py)
-  Shows 0/1 knapsack with strict routing to `mathopt_mp`.
-* [assignment_highs_native.py](../linear/assignment_highs_native.py)
-  Shows binary assignment with strict routing to `highs_native`.
-* [facility_location_small.py](../linear/facility_location_small.py)
-  Shows facility open/assign modeling with the default `milp` family route and backend selection through the registry.
-* [routing_linearized_small.py](../linear/routing_linearized_small.py)
-  Shows the same routing domain represented as a linearized MILP instead of a blackbox sequence objective.
+- [assignment_highs_native.py](../linear/assignment_highs_native.py)
+  Solves a binary assignment model with the internal `optx` backend.
+- [knapsack_mathopt.py](../linear/knapsack_mathopt.py)
+  Solves 0/1 knapsack with the external `mathopt_mp` adapter.
+- [facility_location_small.py](../linear/facility_location_small.py)
+  Solves facility open/assign decisions with internal exact MP.
+- [routing_linearized_small.py](../linear/routing_linearized_small.py)
+  Shows a small route model expressed as linear MIP instead of a blackbox scorer.

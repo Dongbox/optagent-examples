@@ -3,14 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import ExactBackendName, ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import CpSatConfig, ModelBuilder, solve_cpsat
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from _common import print_solution
 
 
-def main() -> None:
+def build_model() -> tuple[object, int]:
     builder = ModelBuilder(metadata={"case": "flow_shop_cp_sat"})
     seq = builder.sequence_var(size=3, default=[2, 1, 0], name="machine_order")
     cut = builder.interval_var(start=0, length=2, lb_start=0, ub_start=5, lb_length=2, ub_length=2, name="cut")
@@ -21,22 +21,19 @@ def main() -> None:
     builder.constraint(builder.precedence(cut, drill, lag=0), name="cut_before_drill")
     builder.constraint(builder.precedence(drill, pack, lag=0), name="drill_before_pack")
     builder.minimize(builder.interval_end(pack), name="makespan")
-    program = builder.freeze()
+    return builder.freeze(), seq.node_id
 
-    result = Orchestrator().run(
+
+def main() -> None:
+    program, sequence_id = build_model()
+    solution = solve_cpsat(
         program,
-        config=OrchestratorConfig(
-            required_backend=ExactBackendName.CP_SAT_NATIVE,
-            strict_backend=True,
-            phases=[PhaseConfig(name="cp_sat_flow_shop", solver=OrchestratorSolver.CP_SAT, budget_iterations=20)],
+        config=CpSatConfig(
+            time_limit_s=10.0,
+            workers=1,
         ),
     )
-
-    print_solution(
-        "flow shop scheduling solved by CP-SAT native backend",
-        result.final_solution,
-        extra={"sequence_variable": seq.node_id},
-    )
+    print_solution("flow shop scheduling solved by CP-SAT exact API", solution, extra={"sequence_variable": sequence_id})
 
 
 if __name__ == "__main__":

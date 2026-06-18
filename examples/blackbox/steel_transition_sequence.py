@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from steel.steel_blackbox_sequence import main
+from steel.steel_sequence_external import main
 
 
 if __name__ == "__main__":

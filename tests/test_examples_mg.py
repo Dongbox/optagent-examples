@@ -296,8 +296,7 @@ def test_mg_search_replacement_report_runs_profile_matrix(tmp_path: Path) -> Non
     assert len(payload["best"]["sequence"]) == 3
     assert payload["best"]["solver_trace_count"] >= 1
     assert payload["score_curve"]
-    assert {point["source"] for point in payload["score_curve"]} >= {"baseline", "accepted_move", "phase", "final"}
-    assert any(point.get("improved_best") for point in payload["score_curve"] if point["source"] == "accepted_move")
+    assert {point["source"] for point in payload["score_curve"]} >= {"baseline", "final"}
     assert payload["runs"][0]["total_cost"] <= payload["runs"][-1]["total_cost"]
 
 

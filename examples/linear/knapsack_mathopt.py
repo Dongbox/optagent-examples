@@ -3,18 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import ExactBackendName, ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import MilpConfig, ModelBuilder, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from _common import print_solution
 
 
-def main() -> None:
-    builder = ModelBuilder(
-        metadata={"case": "knapsack_mathopt"},
-        solve_config={"preferred_backend": "mathopt_mp", "mathopt_solver_type": "GSCIP"},
-    )
+def build_model() -> tuple[object, dict[str, object]]:
+    builder = ModelBuilder(metadata={"case": "knapsack_mathopt_external"})
     weights = [2, 3, 4, 5, 9]
     values = [3, 4, 8, 8, 10]
     picks = [builder.int_var(default=0, lb=0, ub=1, name=f"pick_{idx}") for idx in range(len(weights))]
@@ -24,25 +21,19 @@ def main() -> None:
 
     builder.constraint(total_weight <= 10, name="capacity")
     builder.maximize(total_value, name="profit")
-    program = builder.freeze()
+    return builder.freeze(), {"weights": weights, "values": values}
 
-    result = Orchestrator().run(
+
+def main() -> None:
+    program, data = build_model()
+    solution = solve_milp(
         program,
-        config=OrchestratorConfig(
-            required_backend=ExactBackendName.MATHOPT_MP,
-            strict_backend=True,
-            phases=[PhaseConfig(name="mathopt_knapsack", solver=OrchestratorSolver.MILP, budget_iterations=20)],
+        config=MilpConfig(
+            backend="mathopt_mp",
+            time_limit_s=10.0,
         ),
     )
-
-    print_solution(
-        "0/1 knapsack solved by MathOpt bridge",
-        result.final_solution,
-        extra={
-            "weights": weights,
-            "values": values,
-        },
-    )
+    print_solution("0/1 knapsack solved by external MathOpt MP backend", solution, extra=data)
 
 
 if __name__ == "__main__":

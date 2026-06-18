@@ -164,9 +164,6 @@ def build_single_window_milp_program(
 
     k: 滚动规划求解轮次（从 0 开始）
     """
-    solve_config: dict[str, Any] = {}
-    if preferred_backend:
-        solve_config["preferred_backend"] = preferred_backend
     builder = ModelBuilder(
         metadata={
             "problem_family": "resource_flow",
@@ -175,8 +172,8 @@ def build_single_window_milp_program(
             "modeling_period": modeling_period,
             "contracts": len(model_input.D),
             "machines": len(config.m_real),
+            **({"preferred_backend": preferred_backend} if preferred_backend else {}),
         },
-        solve_config=solve_config,
     )
     vars_by_name: dict[str, Any] = {}
     m_ids = model_input.M_ids

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import ModelBuilder, Orchestrator, OrchestratorConfig, OrchestratorSolver, PhaseConfig
+from optagent import MilpConfig, ModelBuilder, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -26,7 +26,7 @@ DIST = {
 }
 
 
-def main() -> None:
+def build_model() -> object:
     builder = ModelBuilder(metadata={"case": "routing_linearized_small"})
     nodes = range(4)
     edges = {
@@ -35,10 +35,7 @@ def main() -> None:
         for j in nodes
         if i != j
     }
-    order = {
-        i: builder.int_var(default=i, lb=0, ub=3, name=f"u_{i}")
-        for i in nodes
-    }
+    order = {i: builder.int_var(default=i, lb=0, ub=3, name=f"u_{i}") for i in nodes}
 
     for i in nodes:
         outgoing = [edges[(i, j)] for j in nodes if i != j]
@@ -61,18 +58,15 @@ def main() -> None:
         builder.sum(*((edges[(i, j)] * DIST[(i, j)]) for (i, j) in edges)),
         name="tour_length",
     )
-    program = builder.freeze()
+    return builder.freeze()
 
-    result = Orchestrator().run(
-        program,
-        config=OrchestratorConfig(
-            phases=[PhaseConfig(name="milp_routing", solver=OrchestratorSolver.MILP, budget_iterations=30)],
-        ),
-    )
 
+def main() -> None:
+    program = build_model()
+    solution = solve_milp(program, config=MilpConfig(backend="optx", time_limit_s=10.0))
     print_solution(
-        "small routing model solved with linearized MILP formulation",
-        result.final_solution,
+        "small routing solved as linearized MILP through internal OptX",
+        solution,
         extra={"distance_matrix": {f"{i}->{j}": cost for (i, j), cost in DIST.items()}},
     )
 

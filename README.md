@@ -2,25 +2,20 @@
 
 Runnable examples for OptAgent live in this repository.
 
-The private `optagent` repository keeps the core implementation, internal
-documents, tests for core behavior, and implementation records. This public
-repository keeps example code, example-specific tests, small public data files,
-and helper scripts.
+## Example Scope
 
-## Repository Layout
+The examples are grouped by modeling and solve style:
 
-- `examples/linear/`: MILP, MathOpt, HiGHS, and linearized routing examples.
-- `examples/scheduling/`: `sequence_var`, `interval_var`, `no_overlap`, and CP-SAT examples.
-- `examples/blackbox/`: `external_call` and heuristic search examples.
-- `examples/hybrid/`: mixed linear and scheduling examples.
-- `examples/presets/`: built-in and external preset usage.
-- `examples/mps/`: MPS import and solve examples.
-- `examples/steel/`: steel coil sequencing examples and diagnostics.
-- `examples/resource_flow/`: resource-flow CP-SAT and MILP formulations.
-- `examples/mg/`: hot-dip galvanizing coil sequencing notebook with inline data.
-- `examples/cold_rolling/`: generic cold-rolling coil sequencing notebook with inline data.
-- `tests/`: regression tests for the examples.
-- `scripts/`: repeatable example experiment helpers.
+- `linear/`: algebraic LP/MIP models solved through direct exact APIs.
+- `scheduling/`: interval/sequence scheduling models solved through CP-SAT.
+- `blackbox/`: sequence objectives scored by Python functions and optimized by declared strategies.
+- `mps/`: MPS windows rebuilt into OptAgent models, with exact and strategy-driven modes.
+- `resource_flow/`: bundled CP and MILP resource-flow formulations.
+- `steel/`: two independent steel coil sequencing models, each declaring GA and ALNS strategies directly.
+- `mg/` and `cold_rolling/`: domain notebooks and MG SQLite migration tests.
+
+Cross-family behavior is expressed by strategy configuration, for example ALNS
+with exact repair, inside the problem examples that need it.
 
 ## Install
 
@@ -31,44 +26,45 @@ install the example dependencies:
 python -m pip install -r requirements-dev.txt
 ```
 
-For source-based development, install the OptAgent source checkout or wheel you
-intend to test before running examples, then install the example dependencies:
+For source-based development from the private checkout, put the source tree on
+`PYTHONPATH` before the examples package.
+
+## Run
+
+Run commands from the examples repository root:
 
 ```bash
-python -m pip install -r requirements-dev.txt
-```
-
-Optional exact solver examples use `ortools` and/or `highspy`. Tests that need
-those backends are skipped or narrowed when the dependency is unavailable.
-
-## Run Examples
-
-Run commands from the repository root.
-
-```bash
+PYTHONPATH=. python examples/linear/assignment_highs_native.py
 PYTHONPATH=. python examples/linear/knapsack_mathopt.py
 PYTHONPATH=. python examples/scheduling/job_shop_small.py
 PYTHONPATH=. python examples/blackbox/tsp_blackbox_small.py
-PYTHONPATH=. python examples/hybrid/hybrid_production_planning_small.py
-PYTHONPATH=. python examples/steel/run_blackbox.py --instance bundled_head40 --mode preset
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation cp --summary-only
-PYTHONPATH=. python examples/mg/program/main.py examples/mg/program/data/20260407000000.db
+PYTHONPATH=. python examples/steel/steel_sequence_external.py
+PYTHONPATH=. python examples/steel/steel_dag_path.py
 ```
 
-Each example area has its own README with more specific commands and data notes.
+From the private source checkout:
+
+```bash
+PYTHONPATH=../src:. python examples/linear/assignment_highs_native.py
+PYTHONPATH=../src:. python examples/linear/knapsack_mathopt.py
+PYTHONPATH=../src:. python examples/scheduling/job_shop_small.py
+PYTHONPATH=../src:. python examples/blackbox/tsp_blackbox_small.py
+PYTHONPATH=../src:. python examples/steel/steel_sequence_external.py
+PYTHONPATH=../src:. python examples/steel/steel_dag_path.py
+```
 
 ## Test
 
-Run tests after OptAgent is installed in the active Python environment.
+Default example test collection covers the maintained example surface:
 
 ```bash
 python -m pytest -q
 ```
 
-To run a smaller smoke set:
+To run explicitly from the private source checkout:
 
 ```bash
-python -m pytest -q tests/test_examples_mps_builder.py tests/test_stage6_steel_examples.py
+PYTHONPATH=../src:. python -m pytest -q
 ```
 
 ## Data Policy

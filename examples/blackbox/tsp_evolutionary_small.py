@@ -1,18 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
 import sys
 
-from optagent import (
-    EvolutionaryConfig,
-    HeuristicOrchestrationConfig,
-    ModelBuilder,
-    Orchestrator,
-    OrchestratorConfig,
-    OrchestratorSolver,
-    PhaseConfig,
-)
+from optagent import ExternalCallbackContext, GaConfig, ModelBuilder, SolveOptions, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -33,40 +24,31 @@ def route_cost(order: list[int]) -> int:
 
 
 def main() -> None:
-    builder = ModelBuilder(metadata={"case": "tsp_evolutionary_small"})
+    builder = ModelBuilder(metadata={"case": "tsp_blackbox_ga"})
     route = builder.sequence_var(size=4, default=[3, 2, 1, 0], name="route")
-    builder.minimize(builder.external_call(route_cost, route, name="route_cost"), name="tour_length")
-    program = builder.freeze()
 
-    result = Orchestrator().run(
-        program,
-        config=OrchestratorConfig(
-            total_budget_iterations=24,
-            phases=[
-                PhaseConfig(
-                    name="evolutionary_tsp_blackbox",
-                    solver=OrchestratorSolver.HEURISTIC,
-                    heuristic_plan=HeuristicOrchestrationConfig(
-                        phases=[],
-                        evolutionary_plan=EvolutionaryConfig(
-                            population_size=6,
-                            elite_size=2,
-                            generation_limit=4,
-                        ),
-                    ),
-                )
-            ],
+    def route_cost_ctx(ctx: ExternalCallbackContext) -> int:
+        return route_cost([int(index) for index in ctx.value(route)])
+
+    builder.minimize(builder.external_call(route_cost_ctx, name="route_cost"), name="tour_length")
+    solution = solve(
+        builder.freeze(),
+        options=SolveOptions(
+            strategy=GaConfig(
+                max_iterations=40,
+                population_size=6,
+                mutation_count=2,
+                mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
+                local_improvement_strategy="tabu",
+                local_improvement_top_k=1,
+            ),
+            seed=11,
+            time_limit_s=10.0,
+            log_level="off",
+            trace_output="summary",
         ),
     )
-
-    print_solution(
-        "small TSP solved by evolutionary heuristic over a blackbox objective",
-        result.final_solution,
-        extra={
-            "distance_matrix": DIST,
-            "generation_traces": [asdict(trace) for trace in result.evolutionary_generation_traces],
-        },
-    )
+    print_solution("small TSP blackbox route solved by GaConfig", solution, extra={"distance_matrix": DIST})
 
 
 if __name__ == "__main__":
