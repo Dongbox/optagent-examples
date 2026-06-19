@@ -225,6 +225,7 @@ def test_mg_case_loader_scores_and_builds_program(tmp_path: Path) -> None:
     assert evaluated.objective_values
     assert next(iter(evaluated.objective_values.values())) == score.total_cost
     assert built.program.metadata["structured_model_status"] == "edge_metadata_plus_blackbox_objective"
+    assert "sequence_adjacency_penalty_matrix" not in built.program.metadata
     assert built.program.metadata["structured_edge_rules"]
     assert len(built.program.metadata["sequence_structured_edges"]) == 3
 

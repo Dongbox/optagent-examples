@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 from typing import Any
 
-from optagent import AlnsConfig, ExternalCallbackContext, GaConfig, ModelBuilder, SolveOptions, solve
+from optagent import AlnsConfig, GaConfig, ModelBuilder, SolveOptions, solve
 
 
 DATA_PATH = Path(__file__).with_name("data") / "steel_coils.json"
@@ -88,25 +88,22 @@ def build_sequence_external_model(instance: SteelCoilInstance) -> SequenceExtern
     builder = ModelBuilder(
         metadata={
             "case": f"steel_sequence_external_{instance.name}",
-            "model_style": "sequence_external_objective",
-            "sequence_adjacency_penalty_matrix": penalty_matrix,
+            "model_style": "sequence_graph_ir_objective",
             "sequence_break_window": 24,
         }
     )
-    coil_sequence = builder.sequence_var(size=len(instance.coils), name="coil_sequence")
+    coil_sequence = builder.sequence_var(
+        size=len(instance.coils),
+        default=default_sequence,
+        name="coil_sequence",
+    )
     builder.constraint(builder.sequence_contains(coil_sequence, 0), name="contains_first_coil")
-
-    def steel_transition_count(ctx: ExternalCallbackContext) -> float:
-        sequence: list[int] = ctx.value(coil_sequence)
-        return float(transition_count(sequence, instance.coils))
-
     builder.minimize(
-        builder.external_call(
-            steel_transition_count,
-            name="steel_transition_count",
-            timeout_ms=50,
-            pure=True,
-            deterministic=True,
+        builder.sequence_transition_sum(
+            coil_sequence,
+            penalty_matrix,
+            include_return_edge=False,
+            cost_semantics="penalty",
         ),
         name="transition_count",
     )
@@ -240,7 +237,7 @@ def solve_sequence_external(
     rows = [ga_row, alns_row]
     best = min(rows, key=lambda row: (row["objective"], row["elapsed_seconds"]))
     return {
-        "modeling": "sequence_external_objective",
+        "modeling": "sequence_graph_ir_objective",
         "instance": instance.name,
         "coil_count": len(instance.coils),
         "seed": seed,
@@ -272,7 +269,7 @@ def print_summary(payload: dict[str, Any]) -> None:
 
 def main() -> int:
     instances = load_steel_instances()
-    parser = argparse.ArgumentParser(description="Solve the steel sequence/external model with GA and ALNS.")
+    parser = argparse.ArgumentParser(description="Solve the steel sequence graph IR model with GA and ALNS.")
     parser.add_argument("--instance", choices=tuple(instances), default="toy")
     parser.add_argument("--seed", type=int, default=11)
     parser.add_argument("--max-iterations", type=int, default=120)

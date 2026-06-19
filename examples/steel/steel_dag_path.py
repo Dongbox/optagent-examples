@@ -126,7 +126,6 @@ def build_dag_path_model(instance: SteelCoilInstance) -> DagPathModel:
             "case": f"steel_dag_path_{instance.name}",
             "model_style": "dag_path",
             "sequence_path_linear": True,
-            "sequence_adjacency_penalty_matrix": penalty_matrix,
             "sequence_break_window": 24,
         }
     )

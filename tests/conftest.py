@@ -13,3 +13,9 @@ for path in (EXAMPLES_ROOT, ROOT, PRIVATE_OPTAGENT_SRC, LOCAL_OPTAGENT_SRC):
     text = str(path)
     if path.exists() and text not in sys.path:
         sys.path.insert(0, text)
+
+sys.meta_path = [
+    finder
+    for finder in sys.meta_path
+    if type(finder).__module__ != "_optagent_editable"
+]

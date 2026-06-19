@@ -4,7 +4,7 @@ from __future__ import annotations
 
 The migrated MG model is intentionally kept as a sequence blackbox: OptAgent
 owns sequence exploration, while MG rule semantics stay in `rules.py`. This
-file only declares the optimization variable, attaches useful sequence-edge
+file only declares the optimization variable, attaches diagnostic sequence-edge
 metadata, and wires the blackbox scorer into the objective.
 """
 
@@ -159,7 +159,6 @@ def build_mg_program(case: MGCase, *, use_constructive_default: bool = False) ->
             "model_style": "blackbox_sequence",
             "machine_no": case.machine_no,
             "task_count": len(case.tasks),
-            "sequence_adjacency_penalty_matrix": penalty_matrix,
             "sequence_structured_edge_cost_matrix": structured_edge_cost_matrix(case),
             "sequence_structured_edges": structured_edges,
             "structured_edge_rules": list(STRUCTURED_EDGE_RULES),

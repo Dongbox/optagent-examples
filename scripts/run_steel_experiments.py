@@ -9,14 +9,35 @@ from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "examples"))
 
-from optagent.benchmark_cli import parse_seeds, write_json_output
 from steel.steel_sequence_external import load_steel_instances, solve_sequence_external
+
+
+def parse_csv_or_repeat(values: list[str] | None) -> tuple[str, ...]:
+    if not values:
+        return ()
+    items: list[str] = []
+    for value in values:
+        for part in value.split(","):
+            normalized = part.strip()
+            if normalized:
+                items.append(normalized)
+    return tuple(items)
+
+
+def parse_seeds(values: list[str] | None) -> tuple[int, ...]:
+    raw = parse_csv_or_repeat(values)
+    return tuple(int(item) for item in raw) if raw else (0,)
+
+
+def write_json_output(path: Path, payload: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
 
 def _build_parser() -> argparse.ArgumentParser:
     instances = load_steel_instances()
     parser = argparse.ArgumentParser(
-        description="Run repeatable steel sequence/external GA-vs-ALNS comparisons across one instance.",
+        description="Run repeatable steel sequence graph IR GA-vs-ALNS comparisons across one instance.",
     )
     parser.add_argument("--instance", choices=tuple(instances), default="bundled_head40")
     parser.add_argument(

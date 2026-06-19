@@ -25,7 +25,7 @@ from the configured GA or ALNS strategy.
 
 - load the bundled public steel coil data
 - define direct-weld compatibility and transition-count diagnostics
-- build an OptAgent `sequence_var` model with a ctx-style external objective
+- build an OptAgent `sequence_var` model with `sequence_transition_sum(...)`
 - start from the builder's natural sequence default instead of a constructive seed
 - call the current strategy-first API with `GaConfig` and `AlnsConfig`
 - print or write a comparable result payload
