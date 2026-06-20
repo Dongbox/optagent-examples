@@ -302,7 +302,7 @@ def solve_mg_sequence(
     built = build_mg_program(case, use_constructive_default=use_constructive_default)
     # The baseline is the frozen program's default state, normally sourced from
     # `t_process_output`. It gives every run a stable improvement reference.
-    baseline_sequence = list(built.program.default_state().variable_values[built.sequence_node_id])
+    baseline_sequence = list(built.program.default_variable_values()[built.sequence_node_id])
     baseline_score = score_sequence(case, baseline_sequence)
 
     runs: list[MGSearchRun] = []

@@ -12,9 +12,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from optagent import ExternalCallbackContext, ModelBuilder
-from optagent.search.sequence_adjacency import greedy_construct_sequence
 
 from .rules import _connectable, build_penalty_matrix, score_sequence_external
+from .sequence_construct import greedy_construct_sequence
 from mg.program.scripts.preprocess.data import MGCase
 
 

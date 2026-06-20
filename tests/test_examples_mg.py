@@ -4,8 +4,6 @@ import logging
 from pathlib import Path
 import sqlite3
 
-from optagent.ir.eval_full import evaluate_full
-
 from mg.program.model.model import build_mg_program
 from mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
 from mg.program.model.rules import group_rule_costs, score_sequence
@@ -23,6 +21,8 @@ from mg.program.scripts.postprocess.postprocess import read_output_tables, write
 from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
 import mg.program.main as mg_main
 from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
+from tests.reference_eval.eval_full import evaluate_full
+from tests.reference_eval.state import EvaluationState
 
 
 def test_mg_program_main_configures_agent_logger() -> None:
@@ -217,7 +217,10 @@ def test_mg_case_loader_scores_and_builds_program(tmp_path: Path) -> None:
     case = load_mg_case(db_path)
     score = score_sequence(case, case.default_sequence)
     built = build_mg_program(case)
-    evaluated = evaluate_full(built.program, built.program.default_state())
+    evaluated = evaluate_full(
+        built.program,
+        EvaluationState(variable_values=built.program.default_variable_values()),
+    )
 
     assert case.summary()["task_count"] == 3
     assert case.summary()["connectables_source"] == "db:t_connectables"
