@@ -4,7 +4,8 @@ from pathlib import Path
 import sys
 import json
 
-from optagent import MilpConfig, ModelBuilder, exact_backend_registry, solve_milp
+from optagent import MilpConfig, ModelBuilder, solve_milp
+from optagent.exact import exact_backend_registry
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

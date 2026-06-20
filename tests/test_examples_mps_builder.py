@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from optagent import GaConfig, MilpConfig, SolutionStatus, SolveOptions, exact_backend_registry, solve, solve_milp
+from optagent import GaConfig, MilpConfig, SolutionStatus, SolveOptions, solve, solve_milp
+from optagent.exact import exact_backend_registry
 
 
 OPTX_AVAILABLE = exact_backend_registry()["optx"].backend.is_available()

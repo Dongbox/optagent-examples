@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from optagent import CpSatConfig, MilpConfig, SolutionStatus, exact_backend_registry, solve_cpsat, solve_milp
+from optagent import CpSatConfig, MilpConfig, SolutionStatus, solve_cpsat, solve_milp
+from optagent.exact import exact_backend_registry
 
 from examples.resource_flow.case_loader import load_case
 from examples.resource_flow.cp_builder import advance_window_input, build_single_window_program, roll_named_warm_start
