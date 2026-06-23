@@ -17,7 +17,6 @@ from typing import Any, Iterable
 from optagent import (
     GaConfig,
     LnsConfig,
-    SolveOptions,
     StrategyConfig,
     TabuConfig,
     UnifiedSolution,
@@ -71,7 +70,8 @@ class MGStrategyRunConfig:
     budget_iterations: int
     generation_limit: int
     strategy: StrategyConfig
-    options: SolveOptions
+    log_level: str = "off"
+    trace_output: str = "summary"
     progress_logging: bool = False
     progress_log_level: int | None = None
     progress_mode: str = ""
@@ -117,20 +117,14 @@ def build_mg_config(
             local_improvement_strategy="tabu",
             local_improvement_top_k=1,
         )
-    options = SolveOptions(
-        strategy=strategy,
-        max_iterations=budget_iterations,
-        seed=seed,
-        log_level="summary" if progress_logging else "off",
-        trace_output="summary",
-    )
     return MGStrategyRunConfig(
         mode=mode,
         seed=seed,
         budget_iterations=budget_iterations,
         generation_limit=generation_limit,
         strategy=strategy,
-        options=options,
+        log_level="summary" if progress_logging else "off",
+        trace_output="summary",
         progress_logging=progress_logging,
         progress_log_level=progress_log_level,
         progress_mode=mode,
@@ -331,7 +325,14 @@ def solve_mg_sequence(
                 heuristic_cost_logging=heuristic_cost_logging,
                 heuristic_cost_logging_policy=heuristic_cost_logging_policy,
             )
-            result = solve(built.program, options=config.options)
+            result = solve(
+                built.program,
+                strategy=config.strategy,
+                max_iterations=config.budget_iterations,
+                seed=config.seed,
+                log_level=config.log_level,
+                trace_output=config.trace_output,
+            )
             runtime_seconds = perf_counter() - start
             sequence = _sequence_from_result(result, built.sequence_node_id)
             run = _summarize_run(

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import ExternalCallbackContext, ModelBuilder, SolveOptions, TabuConfig, solve
+from optagent import ExternalCallbackContext, ModelBuilder, TabuConfig, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -33,13 +33,10 @@ def main() -> None:
     builder.minimize(builder.external_call(route_cost_ctx, name="route_cost"), name="tour_length")
     solution = solve(
         builder.freeze(),
-        options=SolveOptions(
-            strategy=TabuConfig(max_iterations=80, tabu_tenure=6),
-            seed=11,
-            time_limit_s=10.0,
-            log_level="off",
-            trace_output="summary",
-        ),
+        strategy=TabuConfig(max_iterations=80, tabu_tenure=6),
+        seed=11,
+        time_limit_s=10.0,
+        trace_output="summary",
     )
     print_solution("small TSP blackbox route solved by TabuConfig", solution, extra={"distance_matrix": DIST})
 

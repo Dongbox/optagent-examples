@@ -7,7 +7,7 @@ import sys
 from time import perf_counter
 from typing import Any
 
-from optagent import AlnsConfig, CpSatConfig, MilpConfig, SolveOptions, TabuConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
+from optagent import AlnsConfig, CpSatConfig, MilpConfig, TabuConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -132,14 +132,11 @@ def _tabu_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
     iterations = max(1, args.heuristic_total_budget or args.seed_budget + args.intensify_budget)
     return solve(
         program,
-        options=SolveOptions(
-            strategy=TabuConfig(max_iterations=iterations, tabu_tenure=5),
-            max_iterations=iterations,
-            time_limit_s=args.heuristic_time_limit_seconds or 1.0,
-            seed=0,
-            log_level="off",
-            trace_output="summary",
-        ),
+        strategy=TabuConfig(max_iterations=iterations, tabu_tenure=5),
+        max_iterations=iterations,
+        time_limit_s=args.heuristic_time_limit_seconds or 1.0,
+        seed=0,
+        trace_output="summary",
     )
 
 
@@ -147,22 +144,19 @@ def _alns_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
     iterations = max(1, args.heuristic_total_budget or args.seed_budget + args.refine_budget)
     return solve(
         program,
-        options=SolveOptions(
-            strategy=AlnsConfig(
-                max_iterations=iterations,
-                destroy_count=2,
-                repair_operators=("greedy", "beam"),
-                acceptance="not_worse",
-                exact_repair_on_stall=True,
-                exact_repair_time_budget_s=args.exact_time_limit_seconds or args.time_limit_seconds or 0.5,
-            ),
+        strategy=AlnsConfig(
             max_iterations=iterations,
-            time_limit_s=max(args.heuristic_time_limit_seconds or 1.0, 0.1),
-            seed=1,
-            log_level="off",
-            trace_output="summary",
-            exact_repair=True,
+            destroy_count=2,
+            repair_operators=("greedy", "beam"),
+            acceptance="not_worse",
+            exact_repair_on_stall=True,
+            exact_repair_time_budget_s=args.exact_time_limit_seconds or args.time_limit_seconds or 0.5,
         ),
+        max_iterations=iterations,
+        time_limit_s=max(args.heuristic_time_limit_seconds or 1.0, 0.1),
+        seed=1,
+        trace_output="summary",
+        exact_repair=True,
     )
 
 

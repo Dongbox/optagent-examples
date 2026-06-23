@@ -6,7 +6,7 @@ sequence variables. They use `solve(...)` with explicit strategy objects.
 Typical shape:
 
 ```python
-solution = solve(program, options=SolveOptions(strategy=TabuConfig(max_iterations=60)))
+solution = solve(program, strategy=TabuConfig(max_iterations=60))
 ```
 
 Included examples:

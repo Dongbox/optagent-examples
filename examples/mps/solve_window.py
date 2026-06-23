@@ -7,7 +7,7 @@ import sys
 from time import perf_counter
 from typing import Any
 
-from optagent import GaConfig, MilpConfig, SolveOptions, solve, solve_milp
+from optagent import GaConfig, MilpConfig, solve, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -88,18 +88,15 @@ def main() -> None:
     else:
         solution = solve(
             built.program,
-            options=SolveOptions(
-                strategy=GaConfig(
-                    max_iterations=40,
-                    population_size=8,
-                    mutation_count=2,
-                    mutation_portfolio=("random_reset", "random_swap"),
-                ),
-                seed=args.seed,
-                time_limit_s=args.time_limit_s,
-                log_level="off",
-                trace_output="summary",
+            strategy=GaConfig(
+                max_iterations=40,
+                population_size=8,
+                mutation_count=2,
+                mutation_portfolio=("random_reset", "random_swap"),
             ),
+            seed=args.seed,
+            time_limit_s=args.time_limit_s,
+            trace_output="summary",
         )
     solve_seconds = perf_counter() - solve_start
 

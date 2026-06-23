@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 from typing import Any
 
-from optagent import AlnsConfig, GaConfig, ModelBuilder, SolveOptions, solve
+from optagent import AlnsConfig, GaConfig, ModelBuilder, solve
 
 
 DATA_PATH = Path(__file__).with_name("data") / "steel_coils.json"
@@ -177,29 +177,26 @@ def solve_sequence_external(
     started = time.monotonic()
     ga_solution = solve(
         model.program,
-        SolveOptions(
-            strategy=GaConfig(
-                max_iterations=max_iterations,
-                population_size=population_size,
-                mutation_count=max(1, population_size // 3),
-                search_width=population_size,
-                parallel_workers=1,
-                duplicate_filter=True,
-                mutation_portfolio=(
-                    "sequence_two_opt",
-                    "sequence_block_move",
-                    "ruin_and_repair",
-                    "random_swap",
-                ),
-                local_improvement_strategy="tabu",
-                local_improvement_top_k=2,
+        strategy=GaConfig(
+            max_iterations=max_iterations,
+            population_size=population_size,
+            mutation_count=max(1, population_size // 3),
+            search_width=population_size,
+            parallel_workers=1,
+            duplicate_filter=True,
+            mutation_portfolio=(
+                "sequence_two_opt",
+                "sequence_block_move",
+                "ruin_and_repair",
+                "random_swap",
             ),
-            seed=seed,
-            time_limit_s=time_limit_s,
-            log_level="off",
-            trace_output="summary",
-            trace_limit=trace_limit,
+            local_improvement_strategy="tabu",
+            local_improvement_top_k=2,
         ),
+        seed=seed,
+        time_limit_s=time_limit_s,
+        trace_output="summary",
+        trace_limit=trace_limit,
     )
     ga_row = summarize_solution(
         model=model,
@@ -212,19 +209,16 @@ def solve_sequence_external(
     started = time.monotonic()
     alns_solution = solve(
         model.program,
-        SolveOptions(
-            strategy=AlnsConfig(
-                max_iterations=max_iterations,
-                destroy_count=3,
-                repair_operators=("greedy", "beam"),
-                acceptance="not_worse",
-            ),
-            seed=seed,
-            time_limit_s=time_limit_s,
-            log_level="off",
-            trace_output="summary",
-            trace_limit=trace_limit,
+        strategy=AlnsConfig(
+            max_iterations=max_iterations,
+            destroy_count=3,
+            repair_operators=("greedy", "beam"),
+            acceptance="not_worse",
         ),
+        seed=seed,
+        time_limit_s=time_limit_s,
+        trace_output="summary",
+        trace_limit=trace_limit,
     )
     alns_row = summarize_solution(
         model=model,

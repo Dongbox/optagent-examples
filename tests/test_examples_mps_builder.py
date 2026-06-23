@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from optagent import GaConfig, MilpConfig, SolutionStatus, SolveOptions, solve, solve_milp
+from optagent import GaConfig, MilpConfig, SolutionStatus, solve, solve_milp
 from optagent.exact import exact_backend_registry
 
 
@@ -79,17 +79,15 @@ def test_tiny_mps_model_solves_through_declared_strategy(tmp_path: Path) -> None
     built = build_program_from_mps(mps_path)
     solution = solve(
         built.program,
-        options=SolveOptions(
-            strategy=GaConfig(
-                max_iterations=20,
-                population_size=4,
-                mutation_portfolio=("random_reset", "random_swap"),
-            ),
+        strategy=GaConfig(
             max_iterations=20,
-            time_limit_s=5.0,
-            log_level="off",
-            trace_output="summary",
+            population_size=4,
+            mutation_portfolio=("random_reset", "random_swap"),
         ),
+        max_iterations=20,
+        time_limit_s=5.0,
+        log_level="off",
+        trace_output="summary",
     )
 
     assert solution.objective_values

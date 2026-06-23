@@ -16,9 +16,9 @@ program/main.py
   -> reports.run_production_case(db_path)
      -> preprocess.data.load_mg_case(...)
      -> reports.build_search_replacement_report(...)
-        -> search.solve_mg_sequence(...)
+           -> search.solve_mg_sequence(...)
            -> model.build_mg_program(...)
-           -> optagent.solve(..., SolveOptions(strategy=...))
+           -> optagent.solve(..., strategy=...)
      -> postprocess.write_production_output_tables(...)
      -> optional postprocess.write_legacy_compatibility_tables(...)
 ```
