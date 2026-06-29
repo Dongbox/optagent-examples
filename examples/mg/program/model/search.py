@@ -15,10 +15,9 @@ from time import perf_counter
 from typing import Any, Iterable
 
 from optagent import (
+    AlnsConfig,
     GaConfig,
-    LnsConfig,
     StrategyConfig,
-    TabuConfig,
     UnifiedSolution,
     solve,
 )
@@ -98,23 +97,17 @@ def build_mg_config(
     module directly with custom budgets when comparing profiles.
     """
 
-    if mode == "tabu":
-        strategy: StrategyConfig = TabuConfig(
-            max_iterations=budget_iterations,
-            tabu_tenure=max(4, min(20, budget_iterations // 2 or 4)),
-        )
-    elif mode == "polish":
-        strategy = LnsConfig(
+    if mode == "polish":
+        strategy: StrategyConfig = AlnsConfig(
             max_iterations=budget_iterations,
             destroy_count=2,
-            lns_every=2,
         )
     else:
         strategy = GaConfig(
             max_iterations=max(budget_iterations, generation_limit),
             population_size=8,
             mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
-            local_improvement_strategy="tabu",
+            local_improvement_strategy="lns",
             local_improvement_top_k=1,
         )
     return MGStrategyRunConfig(
