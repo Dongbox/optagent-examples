@@ -27,7 +27,7 @@ from .rules import group_rule_costs, score_sequence
 from mg.program.scripts.preprocess.data import MGCase
 
 
-DEFAULT_SEARCH_MODES = ("tabu", "polish", "evolutionary")
+DEFAULT_SEARCH_MODES = ("ga", "polish", "evolutionary")
 OPTAGENT_LOGGER_NAME = "OptAgent"
 
 

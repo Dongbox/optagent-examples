@@ -190,7 +190,7 @@ def solve_sequence_external(
                 "ruin_and_repair",
                 "random_swap",
             ),
-            local_improvement_strategy="tabu",
+            local_improvement_strategy="lns",
             local_improvement_top_k=2,
         ),
         seed=seed,

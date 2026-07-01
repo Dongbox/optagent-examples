@@ -7,7 +7,7 @@ import sys
 from time import perf_counter
 from typing import Any
 
-from optagent import AlnsConfig, CpSatConfig, MilpConfig, TabuConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
+from optagent import AlnsConfig, CpSatConfig, GaConfig, MilpConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--planning-period", type=int, default=3)
     parser.add_argument("--modeling-period", type=int, default=3)
     parser.add_argument("--window-index", type=int, default=0)
-    parser.add_argument("--mode", choices=["exact", "tabu", "alns"], default="exact")
+    parser.add_argument("--mode", choices=["exact", "ga", "alns"], default="exact")
     parser.add_argument("--backend", choices=["auto", "optx", "mathopt_mp"], default="auto")
     parser.add_argument("--summary-only", action="store_true")
     parser.add_argument("--time-limit-seconds", type=float)
@@ -128,11 +128,16 @@ def _exact_solve(args: argparse.Namespace, program: Any) -> Any:
     )
 
 
-def _tabu_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
+def _ga_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
     iterations = max(1, args.heuristic_total_budget or args.seed_budget + args.intensify_budget)
     return solve(
         program,
-        strategy=TabuConfig(max_iterations=iterations, tabu_tenure=5),
+        strategy=GaConfig(
+            max_iterations=iterations,
+            population_size=6,
+            mutation_count=2,
+            mutation_portfolio=("random_reset", "random_swap"),
+        ),
         max_iterations=iterations,
         time_limit_s=args.heuristic_time_limit_seconds or 1.0,
         seed=0,
@@ -170,8 +175,8 @@ def main() -> None:
         solve_start = perf_counter()
         if args.mode == "exact":
             solution = _exact_solve(args, program)
-        elif args.mode == "tabu":
-            solution = _tabu_solve(args, program)
+        elif args.mode == "ga":
+            solution = _ga_solve(args, program)
         else:
             solution = _alns_solve(args, program)
         solve_seconds = perf_counter() - solve_start

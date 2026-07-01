@@ -263,7 +263,7 @@ def solve_dag_path(
             parallel_workers=1,
             duplicate_filter=True,
             mutation_portfolio=("random_reset", "random_swap"),
-            local_improvement_strategy="tabu",
+            local_improvement_strategy="lns",
             local_improvement_top_k=1,
         ),
         seed=seed,

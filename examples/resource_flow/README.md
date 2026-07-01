@@ -26,7 +26,7 @@ PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation milp --mo
 Solve modes:
 
 - `exact`: `solve_cpsat(...)` for CP formulation, `solve_milp(...)` for MILP formulation.
-- `tabu`: `solve(...)` with `TabuConfig`.
+- `ga`: `solve(...)` with `GaConfig`.
 - `alns`: `solve(...)` with `AlnsConfig` and exact repair enabled.
 
 Default bundled behavior is self-contained for the shipped `planning_period=3`

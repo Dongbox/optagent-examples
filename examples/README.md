@@ -14,7 +14,7 @@ Example groups:
 
 - `linear`: direct `solve_milp(...)` with internal `optx` and external `mathopt_mp`.
 - `scheduling`: direct `solve_cpsat(...)`.
-- `blackbox`: `solve(...)` with `TabuConfig` or `GaConfig`.
+- `blackbox`: `solve(...)` with `GaConfig`.
 - `mps`: MPS import plus direct exact or declared strategy solve modes.
 - `resource_flow`: bundled CP/MILP resource-flow formulations.
 - `steel`: two independent coil sequencing model files, each declaring GA and ALNS.

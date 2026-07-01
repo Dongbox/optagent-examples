@@ -28,9 +28,9 @@ program/main.py
 - `model.py`: declares the `sequence_var`, wires `rules.score_sequence_external(...)`
   into the blackbox objective, and attaches adjacent-edge metadata.
 - `search.py`: maps MG modes to current strategy configs:
-  - `tabu` -> `TabuConfig`
-  - `polish` -> `LnsConfig`
-  - `evolutionary` -> `GaConfig`
+  - `ga` -> `GaConfig`
+  - `polish` -> `AlnsConfig`
+  - `evolutionary` -> `GaConfig` (with LNS local improvement)
 - `reports.py`: adds APS parity context, structured-edge diagnostics, production
   payload assembly, and SQLite output writes.
 - `rules.py`: owns MG scoring semantics.

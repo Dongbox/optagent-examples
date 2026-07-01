@@ -60,7 +60,7 @@ def test_mg_program_main_configures_agent_logger() -> None:
 
 def test_mg_config_can_enable_optagent_progress_logging() -> None:
     config = build_mg_config(
-        mode="tabu",
+        mode="ga",
         budget_iterations=4,
         generation_limit=2,
         seed=7,
@@ -70,7 +70,7 @@ def test_mg_config_can_enable_optagent_progress_logging() -> None:
 
     assert config.progress_logging is True
     assert config.progress_log_level == logging.WARNING
-    assert config.progress_mode == "tabu"
+    assert config.progress_mode == "ga"
     assert config.heuristic_cost_logging is True
     assert config.heuristic_cost_logging_policy == "improved"
 
@@ -286,7 +286,7 @@ def test_mg_search_replacement_report_runs_profile_matrix(tmp_path: Path) -> Non
     case = load_mg_case(db_path)
     payload = build_search_replacement_report(
         case,
-        modes=("tabu",),
+        modes=("ga",),
         seeds=(3, 5),
         budget_iterations=4,
         generation_limit=2,
@@ -295,7 +295,7 @@ def test_mg_search_replacement_report_runs_profile_matrix(tmp_path: Path) -> Non
     assert payload["search"]["run_count"] == 2
     assert payload["baseline"]["total_cost"] > 0
     assert payload["aps_baseline"]["total_cost"] == 0.0
-    assert payload["best"]["mode"] == "tabu"
+    assert payload["best"]["mode"] == "ga"
     assert payload["best"]["seed"] in {3, 5}
     assert len(payload["best"]["sequence"]) == 3
     assert payload["best"]["solver_trace_count"] >= 1
@@ -327,7 +327,7 @@ def test_mg_production_run_writes_auditable_output_tables(tmp_path: Path) -> Non
 
     payload = run_production_case(
         db_path,
-        modes=("tabu",),
+        modes=("ga",),
         seeds=(7,),
         budget_iterations=4,
         generation_limit=2,
@@ -335,7 +335,7 @@ def test_mg_production_run_writes_auditable_output_tables(tmp_path: Path) -> Non
 
     assert payload["integration"]["status"] == "written"
     assert payload["search"]["run_count"] == 1
-    assert payload["best"]["mode"] == "tabu"
+    assert payload["best"]["mode"] == "ga"
 
     conn = sqlite3.connect(db_path)
     try:
@@ -359,7 +359,7 @@ def test_mg_production_run_writes_auditable_output_tables(tmp_path: Path) -> Non
         "o_mg_optagent_search_run",
     }.issubset(output_tables)
     assert manifest["integration_status"] == '"written"'
-    assert manifest["selected_mode"] == '"tabu"'
+    assert manifest["selected_mode"] == '"ga"'
     assert sequence_count == 3
     assert run_count == 1
 
@@ -370,7 +370,7 @@ def test_mg_production_dry_run_does_not_write_output_tables(tmp_path: Path) -> N
 
     payload = run_production_case(
         db_path,
-        modes=("tabu",),
+        modes=("ga",),
         seeds=(7,),
         budget_iterations=2,
         generation_limit=1,
@@ -407,7 +407,7 @@ def test_mg_formal_integration_can_write_legacy_compat_tables(tmp_path: Path) ->
 
     payload = run_production_case(
         db_path,
-        modes=("tabu",),
+        modes=("ga",),
         seeds=(7,),
         budget_iterations=4,
         generation_limit=2,
