@@ -21,8 +21,16 @@ from mg.program.scripts.postprocess.postprocess import read_output_tables, write
 from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
 import mg.program.main as mg_main
 from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
-from tests.reference_eval.eval_full import evaluate_full
-from tests.reference_eval.state import EvaluationState
+
+
+def _evaluate_single_objective_with_defaults(program: object) -> float:
+    objective_node_id = program.objective_ids[0]
+    objective_node = program.graph.nodes[objective_node_id]
+    external_node = program.graph.nodes[objective_node.inputs[0]]
+    callback = external_node.metadata["fn"]
+    default_values = program.default_variable_values()
+    args = [default_values[node_id] for node_id in external_node.inputs]
+    return float(callback(*args))
 
 
 def test_mg_program_main_configures_agent_logger() -> None:
@@ -217,16 +225,12 @@ def test_mg_case_loader_scores_and_builds_program(tmp_path: Path) -> None:
     case = load_mg_case(db_path)
     score = score_sequence(case, case.default_sequence)
     built = build_mg_program(case)
-    evaluated = evaluate_full(
-        built.program,
-        EvaluationState(variable_values=built.program.default_variable_values()),
-    )
+    objective_value = _evaluate_single_objective_with_defaults(built.program)
 
     assert case.summary()["task_count"] == 3
     assert case.summary()["connectables_source"] == "db:t_connectables"
     assert score.diagnostics["active_count"] == 3
-    assert evaluated.objective_values
-    assert next(iter(evaluated.objective_values.values())) == score.total_cost
+    assert objective_value == score.total_cost
     assert built.program.metadata["structured_model_status"] == "edge_metadata_plus_blackbox_objective"
     assert "sequence_adjacency_penalty_matrix" not in built.program.metadata
     assert built.program.metadata["structured_edge_rules"]

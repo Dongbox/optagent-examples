@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
 from examples.resource_flow.case_loader import load_case
 from examples.resource_flow.cp_builder import build_single_window_program
 from examples.resource_flow.milp_builder import build_single_window_milp_program
+from examples._common import solution_metadata
 
 
 def parse_args() -> argparse.Namespace:
@@ -161,7 +162,6 @@ def _alns_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
         time_limit_s=max(args.heuristic_time_limit_seconds or 1.0, 0.1),
         seed=1,
         trace_output="summary",
-        exact_repair=True,
     )
 
 
@@ -187,7 +187,7 @@ def main() -> None:
                 "status": solution.status.value,
                 "feasible": solution.feasible,
                 "objective_values": solution.objective_values,
-                "solution_metadata": solution.metadata,
+                "solution_metadata": solution_metadata(solution),
                 "nonzero_variable_sample": _nonzero_sample(solution.variable_values, variable_node_ids),
             }
         )

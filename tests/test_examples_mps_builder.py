@@ -91,4 +91,4 @@ def test_tiny_mps_model_solves_through_declared_strategy(tmp_path: Path) -> None
     )
 
     assert solution.objective_values
-    assert solution.metadata["strategy"] == "ga"
+    assert solution.result.strategy == "ga"

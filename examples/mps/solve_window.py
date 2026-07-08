@@ -11,6 +11,7 @@ from optagent import GaConfig, MilpConfig, solve, solve_milp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from _common import solution_metadata
 from mps.mps_builder import build_program_from_mps
 
 
@@ -107,7 +108,7 @@ def main() -> None:
             "status": solution.status.value,
             "feasible": solution.feasible,
             "objective_values": solution.objective_values,
-            "solution_metadata": solution.metadata,
+            "solution_metadata": solution_metadata(solution),
             "nonzero_variable_sample": _nonzero_sample(solution.variable_values, built.variable_node_ids),
         }
     )

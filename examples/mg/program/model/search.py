@@ -154,6 +154,18 @@ def _sequence_from_result(result: UnifiedSolution, sequence_node_id: int) -> lis
     return [int(index) for index in result.variable_values[sequence_node_id]]
 
 
+def _solution_metadata(result: UnifiedSolution) -> dict[str, Any]:
+    metadata = dict(result.diagnostics)
+    metadata.update(
+        {
+            "strategy": result.result.strategy,
+            "iterations": result.result.iterations,
+            "termination_reason": result.result.termination_reason,
+        }
+    )
+    return metadata
+
+
 def _run_score_curve(
     *,
     mode: str,
@@ -200,7 +212,7 @@ def _run_score_curve(
 
 
 def _metadata_trace(result: UnifiedSolution) -> list[dict[str, Any]]:
-    trace = result.metadata.get("trace")
+    trace = result.diagnostics.get("trace")
     if isinstance(trace, list):
         return [dict(entry) for entry in trace if isinstance(entry, dict)]
     return []
@@ -210,6 +222,7 @@ def _solver_trace_summary(result: UnifiedSolution, *, mode: str, final_cost: flo
     traces = _metadata_trace(result)
     if traces:
         return traces
+    metadata = _solution_metadata(result)
     return [
         {
             "phase_name": mode,
@@ -217,9 +230,9 @@ def _solver_trace_summary(result: UnifiedSolution, *, mode: str, final_cost: flo
             "status": result.status.value,
             "feasible": result.feasible,
             "score": final_cost,
-            "strategy": result.metadata.get("strategy", mode),
-            "iterations": result.metadata.get("iterations"),
-            "termination_reason": result.metadata.get("termination_reason"),
+            "strategy": metadata.get("strategy", mode),
+            "iterations": metadata.get("iterations"),
+            "termination_reason": metadata.get("termination_reason"),
         }
     ]
 
@@ -237,6 +250,7 @@ def _summarize_run(
     """Score the final candidate again and attach solver trace metadata."""
 
     score = score_sequence(case, sequence)
+    metadata = _solution_metadata(result)
     return MGSearchRun(
         mode=mode,
         seed=seed,
@@ -250,16 +264,16 @@ def _summarize_run(
         sequence=list(sequence),
         sequence_head=list(sequence[:30]),
         grouped_rule_costs=group_rule_costs(score.breakdown),
-        solver_trace_count=max(1, int(result.metadata.get("trace_entry_count", len(_metadata_trace(result))) or 0)),
-        generation_trace_count=int(result.metadata.get("generations", 0) or 0),
+        solver_trace_count=max(1, int(metadata.get("trace_entry_count", len(_metadata_trace(result))) or 0)),
+        generation_trace_count=int(metadata.get("generations", 0) or 0),
         heuristic_subphase_trace_count=0,
         solver_traces=_solver_trace_summary(result, mode=mode, final_cost=score.total_cost),
         generation_trace_tail=[],
-        mutation_successes=dict(result.metadata.get("mutation_successes", {}))
-        if isinstance(result.metadata.get("mutation_successes"), dict)
+        mutation_successes=dict(metadata.get("mutation_successes", {}))
+        if isinstance(metadata.get("mutation_successes"), dict)
         else {},
-        mutation_trials=dict(result.metadata.get("mutation_trials", {}))
-        if isinstance(result.metadata.get("mutation_trials"), dict)
+        mutation_trials=dict(metadata.get("mutation_trials", {}))
+        if isinstance(metadata.get("mutation_trials"), dict)
         else {},
     )
 

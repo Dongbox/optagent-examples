@@ -4,10 +4,15 @@ import argparse
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import sys
 import time
 from typing import Any
 
 from optagent import AlnsConfig, GaConfig, ModelBuilder, solve
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from _common import solution_metadata
 
 
 DATA_PATH = Path(__file__).with_name("data") / "steel_coils.json"
@@ -158,7 +163,7 @@ def summarize_solution(
         "objective": int(diagnostics["transition_count"]),
         "direct_weld_ratio": float(diagnostics["direct_weld_ratio"]),
         "diagnostics": diagnostics,
-        "metadata": metadata_summary(solution.metadata),
+        "metadata": metadata_summary(solution_metadata(solution)),
     }
 
 
