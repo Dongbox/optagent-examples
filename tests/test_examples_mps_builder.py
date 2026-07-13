@@ -55,7 +55,7 @@ def test_parse_and_build_tiny_mps_model(tmp_path: Path) -> None:
     assert built.program.graph.nodes[float_node_id].metadata["family"] == "x"
 
 
-@pytest.mark.skipif(not OPTX_AVAILABLE, reason="requires native OptX backend with embedded HiGHS support")
+@pytest.mark.skipif(not OPTX_AVAILABLE, reason="requires the OptX backend with embedded HiGHS support")
 def test_tiny_mps_model_solves_through_internal_exact_backend(tmp_path: Path) -> None:
     from examples.mps.mps_builder import build_program_from_mps
 

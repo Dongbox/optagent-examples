@@ -15,7 +15,7 @@ Backends shown here:
 
 Included examples:
 
-- [assignment_highs_native.py](../linear/assignment_highs_native.py)
+- [assignment_optx.py](../linear/assignment_optx.py)
   Solves a binary assignment model with the internal `optx` backend.
 - [knapsack_mathopt.py](../linear/knapsack_mathopt.py)
   Solves 0/1 knapsack with the external `mathopt_mp` adapter.

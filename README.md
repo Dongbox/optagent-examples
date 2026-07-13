@@ -34,7 +34,7 @@ For source-based development from the private checkout, put the source tree on
 Run commands from the examples repository root:
 
 ```bash
-PYTHONPATH=. python examples/linear/assignment_highs_native.py
+PYTHONPATH=. python examples/linear/assignment_optx.py
 PYTHONPATH=. python examples/linear/knapsack_mathopt.py
 PYTHONPATH=. python examples/scheduling/job_shop_small.py
 PYTHONPATH=. python examples/blackbox/tsp_blackbox_small.py
@@ -45,7 +45,7 @@ PYTHONPATH=. python examples/steel/steel_dag_path.py
 From the private source checkout:
 
 ```bash
-PYTHONPATH=../src:. python examples/linear/assignment_highs_native.py
+PYTHONPATH=../src:. python examples/linear/assignment_optx.py
 PYTHONPATH=../src:. python examples/linear/knapsack_mathopt.py
 PYTHONPATH=../src:. python examples/scheduling/job_shop_small.py
 PYTHONPATH=../src:. python examples/blackbox/tsp_blackbox_small.py

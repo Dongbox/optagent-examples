@@ -3,7 +3,7 @@
 Current examples use the solve-first API directly.
 
 ```bash
-PYTHONPATH=. python examples/linear/assignment_highs_native.py
+PYTHONPATH=. python examples/linear/assignment_optx.py
 PYTHONPATH=. python examples/scheduling/job_shop_small.py
 PYTHONPATH=. python examples/blackbox/tsp_blackbox_small.py
 PYTHONPATH=. python examples/steel/steel_sequence_external.py
