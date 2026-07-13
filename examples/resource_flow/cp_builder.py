@@ -158,7 +158,7 @@ def build_single_window_program(
     D_ids = model_input.D_ids
     inventory_ub = _get_inventory_upper_bound(config, model_input)
 
-    for (m, n) in config.m_logistics:
+    for m, n in config.m_logistics:
         if (m, n) not in model_input.D_m_n:
             continue
         for d in model_input.D_m_n[(m, n)]:
@@ -166,11 +166,12 @@ def build_single_window_program(
                 global_t = _get_global_t(config.step, k, t)
                 ub = min(model_input.Q_d[d], _get_contract_machine_capacity(config, model_input, d, m, global_t))
                 min_batch = min(20 * _weight_scale(config), model_input.Q_d[d])
-                x = int_var(f"x_d{D_ids[d]}_m{M_ids[m]}_n{M_ids[n]}_t{t}", 0, ub)
+                variable_name = f"x_d{D_ids[d]}_m{M_ids[m]}_n{M_ids[n]}_t{t}"
+                x = int_var(variable_name, 0, ub)
                 if 0 < min_batch <= ub:
                     builder.constraint(
                         builder.or_(x == 0, x >= min_batch),
-                        name=f"{x.builder.graph.nodes[x.node_id].metadata['name']}_domain",
+                        name=f"{variable_name}_domain",
                     )
 
     for m in config.m_real:
@@ -242,18 +243,14 @@ def build_single_window_program(
                 if t == 1:
                     for d in model_input.D_m[m]:
                         inflow_by_contract[d] = builder.const(
-                            sum(
-                                model_input.x_t0.get((d, i, mm), 0)
-                                for (i, mm) in model_input.E_d[d]
-                                if mm == m
-                            )
+                            sum(model_input.x_t0.get((d, i, mm), 0) for (i, mm) in model_input.E_d[d] if mm == m)
                         )
                 else:
                     for d in model_input.D_m[m]:
                         inflow_by_contract[d] = _sum_expr(
                             builder,
                             [
-                                vars_by_name[f"x_d{D_ids[d]}_m{M_ids[i]}_n{M_ids[mm]}_t{t-1}"]
+                                vars_by_name[f"x_d{D_ids[d]}_m{M_ids[i]}_n{M_ids[mm]}_t{t - 1}"]
                                 for (i, mm) in model_input.E_d[d]
                                 if mm == m
                             ],
@@ -270,7 +267,9 @@ def build_single_window_program(
                 for d in model_input.D_m[m]:
                     builder.constraint(
                         vars_by_name[f"I_d{D_ids[d]}_m{m_id}_t{t}"]
-                        == vars_by_name[f"I_d{D_ids[d]}_m{m_id}_t{t - 1}"] + inflow_by_contract[d] - consumption_by_contract[d],
+                        == vars_by_name[f"I_d{D_ids[d]}_m{m_id}_t{t - 1}"]
+                        + inflow_by_contract[d]
+                        - consumption_by_contract[d],
                         name=f"I_d_bal_{d}_{m}_{t}",
                     )
 
@@ -278,7 +277,9 @@ def build_single_window_program(
             range_lb, range_ub = config.I_range[(m, global_t)]
             expect_lb, expect_ub = config.I_expect[m]
             builder.constraint(i_range == builder.max(0, i_m_t - range_ub, range_lb - i_m_t), name=f"range_dev_{m}_{t}")
-            builder.constraint(i_expect == builder.max(0, i_m_t - expect_ub, expect_lb - i_m_t), name=f"expect_dev_{m}_{t}")
+            builder.constraint(
+                i_expect == builder.max(0, i_m_t - expect_ub, expect_lb - i_m_t), name=f"expect_dev_{m}_{t}"
+            )
 
     for m in config.m_real:
         m_id = M_ids[m]
@@ -313,9 +314,12 @@ def build_single_window_program(
                         for d in model_input.D_m[m]
                     ],
                 )
-                builder.constraint(vars_by_name[f"u_m{m_id}_t{t}"] == (util_sum // UTILIZATION_COEFF_SCALE), name=f"util_{m}_{t}")
+                builder.constraint(
+                    vars_by_name[f"u_m{m_id}_t{t}"] == (util_sum // UTILIZATION_COEFF_SCALE), name=f"util_{m}_{t}"
+                )
             builder.constraint(
-                vars_by_name[f"z_m{m_id}_t{t}"] == (vars_by_name[f"u_m{m_id}_t{t}"] <= config.capacity_utilization_standard - 1),
+                vars_by_name[f"z_m{m_id}_t{t}"]
+                == (vars_by_name[f"u_m{m_id}_t{t}"] <= config.capacity_utilization_standard - 1),
                 name=f"util_flag_{m}_{t}",
             )
 
@@ -325,11 +329,7 @@ def build_single_window_program(
         for t in range(1, modeling_period + 1):
             production_d = _sum_expr(
                 builder,
-                [
-                    vars_by_name[f"O_d{d_id}_m{M_ids[m]}_t{t}"]
-                    for (m, n) in model_input.E_d[d]
-                    if n == "m_sink"
-                ],
+                [vars_by_name[f"O_d{d_id}_m{M_ids[m]}_t{t}"] for (m, n) in model_input.E_d[d] if n == "m_sink"],
             )
             builder.constraint(
                 vars_by_name[f"R_d{d_id}_t{t}"] == builder.max(0, vars_by_name[f"R_d{d_id}_t{t - 1}"] - production_d),
@@ -347,7 +347,7 @@ def build_single_window_program(
         )
         builder.constraint(source_total <= model_input.owe_d_m[(d, "m_source")], name=f"source_total_{d}")
 
-        for (m, _) in model_input.E_d[d]:
+        for m, _ in model_input.E_d[d]:
             if m == "m_source":
                 continue
             m_id = M_ids[m]
@@ -374,9 +374,7 @@ def build_single_window_program(
         )
 
     key_range_terms = [
-        vars_by_name[f"delta_I_range_m{M_ids[m]}_t{t}"]
-        for m in config.m_real_key
-        for t in range(modeling_period + 1)
+        vars_by_name[f"delta_I_range_m{M_ids[m]}_t{t}"] for m in config.m_real_key for t in range(modeling_period + 1)
     ]
     common_range_terms = [
         vars_by_name[f"delta_I_range_m{M_ids[m]}_t{t}"]
@@ -384,9 +382,7 @@ def build_single_window_program(
         for t in range(modeling_period + 1)
     ]
     key_expect_terms = [
-        vars_by_name[f"delta_I_expect_m{M_ids[m]}_t{t}"]
-        for m in config.m_real_key
-        for t in range(modeling_period + 1)
+        vars_by_name[f"delta_I_expect_m{M_ids[m]}_t{t}"] for m in config.m_real_key for t in range(modeling_period + 1)
     ]
     common_expect_terms = [
         vars_by_name[f"delta_I_expect_m{M_ids[m]}_t{t}"]
@@ -422,11 +418,7 @@ def build_single_window_program(
     )
     low_util_gap = _sum_expr(
         builder,
-        [
-            100 - vars_by_name[f"u_m{M_ids[m]}_t{t}"]
-            for m in config.m_real
-            for t in range(1, modeling_period + 1)
-        ],
+        [100 - vars_by_name[f"u_m{M_ids[m]}_t{t}"] for m in config.m_real for t in range(1, modeling_period + 1)],
     )
     builder.constraint(
         vars_by_name["cost_utilization"]
@@ -463,8 +455,7 @@ def build_single_window_program(
         )
         due_terms.append(shortfall)
     builder.constraint(
-        vars_by_name["cost_contract_m_due"]
-        == (_sum_expr(builder, due_terms) // max(len(due_terms), 1)),
+        vars_by_name["cost_contract_m_due"] == (_sum_expr(builder, due_terms) // max(len(due_terms), 1)),
         name="cost_contract_m_due_def",
     )
 
@@ -476,7 +467,8 @@ def build_single_window_program(
         m_id = M_ids[m]
         eff_inv = vars_by_name[f"I_d_eff_d{d_id}_m{m_id}_t{t}"]
         builder.constraint(
-            eff_inv == builder.max(0, vars_by_name[f"I_d{d_id}_m{m_id}_t{t}"] - model_input.I_d_m_0_excess.get((d, m), 0)),
+            eff_inv
+            == builder.max(0, vars_by_name[f"I_d{d_id}_m{m_id}_t{t}"] - model_input.I_d_m_0_excess.get((d, m), 0)),
             name=f"ready_eff_{d}_{m}_{t}",
         )
         ready_terms.append(eff_inv * weight)
@@ -543,10 +535,7 @@ def advance_window_input(config: Any, prev_input: Any, prev_solution: dict[str, 
 
     D = prev_input.D
     Q_d = {d: _weight(prev_solution[f"R_d{prev_input.D_ids[d]}_t{step}"]) for d in D}
-    I_m_0 = {
-        m: _weight(prev_solution[f"I_m{prev_input.M_ids[m]}_t{step}"])
-        for m in config.m_real
-    }
+    I_m_0 = {m: _weight(prev_solution[f"I_m{prev_input.M_ids[m]}_t{step}"]) for m in config.m_real}
     I_d_m_0 = {
         (d, m): _weight(prev_solution[f"I_d{prev_input.D_ids[d]}_m{prev_input.M_ids[m]}_t{step}"])
         for (d, m) in prev_input.I_d_m_0
@@ -554,7 +543,9 @@ def advance_window_input(config: Any, prev_input: Any, prev_solution: dict[str, 
     x_t0: dict[tuple[str, str, str], int] = {}
     for (m, n), ds in prev_input.D_m_n.items():
         for d in ds:
-            value = _weight(prev_solution[f"x_d{prev_input.D_ids[d]}_m{prev_input.M_ids[m]}_n{prev_input.M_ids[n]}_t{step}"])
+            value = _weight(
+                prev_solution[f"x_d{prev_input.D_ids[d]}_m{prev_input.M_ids[m]}_n{prev_input.M_ids[n]}_t{step}"]
+            )
             if value > 0:
                 x_t0[(d, m, n)] = value
 
@@ -583,10 +574,7 @@ def advance_window_input(config: Any, prev_input: Any, prev_solution: dict[str, 
         allowed_consumption_qty = owe_d_m.get((d, m), 0) * (1 + overprod_percent / 100) * 1000 / config.m_yield[m]
         I_d_m_0_excess[(d, m)] = max(I_d_m_0.get((d, m), 0) - allowed_consumption_qty, 0)
 
-    t_d_m_due = {
-        (d, m): due
-        for (d, m), due in prev_input.t_d_m_due.items()
-    }
+    t_d_m_due = {(d, m): due for (d, m), due in prev_input.t_d_m_due.items()}
     A_m_due = sorted(
         [
             (d, m)

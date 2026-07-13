@@ -5,7 +5,12 @@ from pathlib import Path
 import sqlite3
 
 from mg.program.model.model import build_mg_program
-from mg.program.model.reports import build_parity_report, build_search_replacement_report, build_structured_report, run_production_case
+from mg.program.model.reports import (
+    build_parity_report,
+    build_search_replacement_report,
+    build_structured_report,
+    run_production_case,
+)
 from mg.program.model.rules import group_rule_costs, score_sequence
 from mg.program.model.search import build_mg_config
 from mg.program.main import (
@@ -17,7 +22,11 @@ from mg.program.main import (
     run_pipeline,
     terminal_output_payload,
 )
-from mg.program.scripts.postprocess.postprocess import read_output_tables, write_legacy_compatibility_tables, write_output_tables
+from mg.program.scripts.postprocess.postprocess import (
+    read_output_tables,
+    write_legacy_compatibility_tables,
+    write_output_tables,
+)
 from mg.program.scripts.preprocess.data import load_mg_case, validate_preprocess_outputs
 import mg.program.main as mg_main
 from mg.program.scripts.preprocess.transformer import CustomTransformer, main as run_transformer
@@ -27,7 +36,7 @@ def _evaluate_single_objective_with_defaults(program: object) -> float:
     objective_node_id = program.objective_ids[0]
     objective_node = program.graph.nodes[objective_node_id]
     external_node = program.graph.nodes[objective_node.inputs[0]]
-    callback = external_node.metadata["fn"]
+    callback = program.external_registry[external_node.payload.external_name]["scalar_fn"]
     default_values = program.default_variable_values()
     args = [default_values[node_id] for node_id in external_node.inputs]
     return float(callback(*args))

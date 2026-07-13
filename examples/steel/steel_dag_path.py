@@ -46,8 +46,28 @@ def load_steel_instances() -> dict[str, SteelCoilInstance]:
 
 
 def can_weld(left: list[float], right: list[float]) -> bool:
-    left_thick, left_thick_up, left_thick_down, left_width, left_width_down, left_width_up, left_temp, left_temp_up, left_temp_down = left
-    right_thick, right_thick_up, right_thick_down, right_width, right_width_down, right_width_up, right_temp, right_temp_up, right_temp_down = right
+    (
+        left_thick,
+        left_thick_up,
+        left_thick_down,
+        left_width,
+        left_width_down,
+        left_width_up,
+        left_temp,
+        left_temp_up,
+        left_temp_down,
+    ) = left
+    (
+        right_thick,
+        right_thick_up,
+        right_thick_down,
+        right_width,
+        right_width_down,
+        right_width_up,
+        right_temp,
+        right_temp_up,
+        right_temp_down,
+    ) = right
     return (
         right_thick_down - EPS <= left_thick <= right_thick_up + EPS
         and right_width_down - EPS <= left_width <= right_width_up + EPS
@@ -66,11 +86,15 @@ def build_penalty_matrix(coils: list[list[float]]) -> list[list[int]]:
 
 
 def transition_count(sequence: list[int], coils: list[list[float]]) -> int:
-    return sum(0 if can_weld(coils[sequence[index - 1]], coils[sequence[index]]) else 1 for index in range(1, len(sequence)))
+    return sum(
+        0 if can_weld(coils[sequence[index - 1]], coils[sequence[index]]) else 1 for index in range(1, len(sequence))
+    )
 
 
 def analyze_sequence(sequence: list[int], coils: list[list[float]]) -> dict[str, Any]:
-    penalties = [0 if can_weld(coils[sequence[index - 1]], coils[sequence[index]]) else 1 for index in range(1, len(sequence))]
+    penalties = [
+        0 if can_weld(coils[sequence[index - 1]], coils[sequence[index]]) else 1 for index in range(1, len(sequence))
+    ]
     breaks = [
         {"prev": sequence[index - 1], "curr": sequence[index], "position": index}
         for index in range(1, len(sequence))
@@ -107,7 +131,9 @@ def order_defaults_from_sequence(sequence: list[int], *, coil_count: int, depot_
     return order
 
 
-def decode_sequence_from_edges(*, selected_edges: list[tuple[int, int]], coil_count: int, depot_index: int) -> list[int]:
+def decode_sequence_from_edges(
+    *, selected_edges: list[tuple[int, int]], coil_count: int, depot_index: int
+) -> list[int]:
     successor = {left: right for left, right in selected_edges}
     sequence: list[int] = []
     current = successor[depot_index]
@@ -153,8 +179,7 @@ def build_dag_path_model(instance: SteelCoilInstance) -> DagPathModel:
         if left != right
     }
     order = {
-        node: builder.int_var(default=order_defaults[node], lb=0, ub=coil_count, name=f"u_{node}")
-        for node in nodes
+        node: builder.int_var(default=order_defaults[node], lb=0, ub=coil_count, name=f"u_{node}") for node in nodes
     }
 
     for node in nodes:
@@ -194,12 +219,10 @@ def build_dag_path_model(instance: SteelCoilInstance) -> DagPathModel:
     )
 
 
-def selected_edges_from_solution(edge_node_ids: dict[tuple[int, int], int], variable_values: dict[int, Any]) -> list[tuple[int, int]]:
-    return [
-        edge
-        for edge, node_id in edge_node_ids.items()
-        if int(round(float(variable_values.get(node_id, 0)))) > 0
-    ]
+def selected_edges_from_solution(
+    edge_node_ids: dict[tuple[int, int], int], variable_values: dict[int, Any]
+) -> list[tuple[int, int]]:
+    return [edge for edge, node_id in edge_node_ids.items() if int(round(float(variable_values.get(node_id, 0)))) > 0]
 
 
 def metadata_summary(metadata: dict[str, Any]) -> dict[str, Any]:
@@ -221,7 +244,9 @@ def metadata_summary(metadata: dict[str, Any]) -> dict[str, Any]:
     return {key: metadata[key] for key in keys if key in metadata}
 
 
-def summarize_solution(*, model: DagPathModel, instance: SteelCoilInstance, solution: Any, strategy_name: str, elapsed_seconds: float) -> dict[str, Any]:
+def summarize_solution(
+    *, model: DagPathModel, instance: SteelCoilInstance, solution: Any, strategy_name: str, elapsed_seconds: float
+) -> dict[str, Any]:
     selected_edges = selected_edges_from_solution(model.edge_node_ids, solution.variable_values)
     sequence = decode_sequence_from_edges(
         selected_edges=selected_edges,
@@ -265,13 +290,13 @@ def solve_dag_path(
             population_size=population_size,
             mutation_count=max(1, population_size // 4),
             search_width=population_size,
-            parallel_workers=1,
             duplicate_filter=True,
             mutation_portfolio=("random_reset", "random_swap"),
             local_improvement_strategy="lns",
             local_improvement_top_k=1,
         ),
         seed=seed,
+        threads=1,
         time_limit_s=time_limit_s,
         trace_output="summary",
         trace_limit=trace_limit,
@@ -294,6 +319,7 @@ def solve_dag_path(
             acceptance="not_worse",
         ),
         seed=seed,
+        threads=1,
         time_limit_s=time_limit_s,
         trace_output="summary",
         trace_limit=trace_limit,
