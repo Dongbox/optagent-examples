@@ -209,17 +209,6 @@ def solve_sequence_external(
         strategy=GaConfig(
             max_iterations=max_iterations,
             population_size=population_size,
-            mutation_count=max(1, population_size // 3),
-            search_width=population_size,
-            duplicate_filter=True,
-            mutation_portfolio=(
-                "sequence_two_opt",
-                "sequence_block_move",
-                "ruin_and_repair",
-                "random_swap",
-            ),
-            local_improvement_strategy="lns",
-            local_improvement_top_k=2,
         ),
         seed=seed,
         threads=1,

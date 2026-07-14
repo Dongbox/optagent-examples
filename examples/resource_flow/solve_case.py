@@ -20,7 +20,9 @@ from examples._common import solution_metadata
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Solve the bundled resource_flow case through CP or MILP formulations.")
+    parser = argparse.ArgumentParser(
+        description="Solve the bundled resource_flow case through CP or MILP formulations."
+    )
     parser.add_argument("--case", default="zj")
     parser.add_argument("--formulation", choices=["cp", "milp"], default="cp")
     parser.add_argument("--planning-period", type=int, default=3)
@@ -136,8 +138,6 @@ def _ga_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
         strategy=GaConfig(
             max_iterations=iterations,
             population_size=6,
-            mutation_count=2,
-            mutation_portfolio=("random_reset", "random_swap"),
         ),
         max_iterations=iterations,
         time_limit_s=args.heuristic_time_limit_seconds or 1.0,

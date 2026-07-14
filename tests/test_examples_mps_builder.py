@@ -82,7 +82,6 @@ def test_tiny_mps_model_solves_through_declared_strategy(tmp_path: Path) -> None
         strategy=GaConfig(
             max_iterations=20,
             population_size=4,
-            mutation_portfolio=("random_reset", "random_swap"),
         ),
         max_iterations=20,
         time_limit_s=5.0,

@@ -16,7 +16,9 @@ from mps.mps_builder import build_program_from_mps
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build an OptAgent model from an MPS window and solve it with current direct APIs.")
+    parser = argparse.ArgumentParser(
+        description="Build an OptAgent model from an MPS window and solve it with current direct APIs."
+    )
     parser.add_argument("--window", type=int, choices=range(6), help="Window index in examples/mps/window_<idx>.mps")
     parser.add_argument("--mps-file", type=Path, help="Explicit MPS file path. Overrides --window when provided.")
     parser.add_argument(
@@ -31,7 +33,9 @@ def parse_args() -> argparse.Namespace:
         default="optx",
         help="MP backend for exact mode. optx is the internal backend; mathopt_mp demonstrates the external adapter.",
     )
-    parser.add_argument("--summary-only", action="store_true", help="Build the program and print model summary without solving.")
+    parser.add_argument(
+        "--summary-only", action="store_true", help="Build the program and print model summary without solving."
+    )
     parser.add_argument("--time-limit-s", type=float, default=10.0)
     parser.add_argument("--seed", type=int, default=11)
     return parser.parse_args()
@@ -92,8 +96,6 @@ def main() -> None:
             strategy=GaConfig(
                 max_iterations=40,
                 population_size=8,
-                mutation_count=2,
-                mutation_portfolio=("random_reset", "random_swap"),
             ),
             seed=args.seed,
             time_limit_s=args.time_limit_s,

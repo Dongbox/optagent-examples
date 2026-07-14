@@ -43,14 +43,14 @@ def main() -> None:
         strategy=GaConfig(
             max_iterations=60,
             population_size=6,
-            mutation_count=2,
-            mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
         ),
         seed=7,
         time_limit_s=10.0,
         trace_output="summary",
     )
-    print_solution("blackbox route optimization solved by GaConfig", solution, extra={"sequence_variable": route.node_id})
+    print_solution(
+        "blackbox route optimization solved by GaConfig", solution, extra={"sequence_variable": route.node_id}
+    )
 
 
 if __name__ == "__main__":

@@ -106,9 +106,6 @@ def build_mg_config(
         strategy = GaConfig(
             max_iterations=max(budget_iterations, generation_limit),
             population_size=8,
-            mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
-            local_improvement_strategy="lns",
-            local_improvement_top_k=1,
         )
     return MGStrategyRunConfig(
         mode=mode,

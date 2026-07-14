@@ -37,10 +37,6 @@ def main() -> None:
         strategy=GaConfig(
             max_iterations=40,
             population_size=6,
-            mutation_count=2,
-            mutation_portfolio=("sequence_two_opt", "sequence_block_move", "random_swap"),
-            local_improvement_strategy="lns",
-            local_improvement_top_k=1,
         ),
         seed=11,
         time_limit_s=10.0,

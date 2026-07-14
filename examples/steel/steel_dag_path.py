@@ -288,12 +288,6 @@ def solve_dag_path(
         strategy=GaConfig(
             max_iterations=max_iterations,
             population_size=population_size,
-            mutation_count=max(1, population_size // 4),
-            search_width=population_size,
-            duplicate_filter=True,
-            mutation_portfolio=("random_reset", "random_swap"),
-            local_improvement_strategy="lns",
-            local_improvement_top_k=1,
         ),
         seed=seed,
         threads=1,
