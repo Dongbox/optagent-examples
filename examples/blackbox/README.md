@@ -16,7 +16,8 @@ Included examples:
 - [tsp_blackbox_small.py](../blackbox/tsp_blackbox_small.py)
   Small TSP-style path optimized with GA search.
 - [tsp_evolutionary_small.py](../blackbox/tsp_evolutionary_small.py)
-  The same kind of sequence objective optimized with `GaConfig` and its
-  `local_improvement_strategy="lns"` option.
+  The same kind of sequence objective optimized with `GaConfig`. Because the
+  objective is an external callback, it uses generic sequence GA behavior rather
+  than compiler-proven TSP-specific local search; both policies remain internal.
 - [steel_transition_sequence.py](../blackbox/steel_transition_sequence.py)
   Compatibility entrypoint that forwards to the canonical steel sequence example.

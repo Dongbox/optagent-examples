@@ -35,7 +35,7 @@ from the configured GA or ALNS strategy.
 - load the same public data independently
 - build explicit edge/order DAG path variables and MTZ path constraints
 - use the natural path only as the raw variable default, not as a heuristic seed
-- call `GaConfig` and `AlnsConfig` with DAG-specific strategy parameters
+- call `GaConfig` and `AlnsConfig` with their stable public controls
 - decode selected edges back into a sequence for diagnostics
 
 ## Run

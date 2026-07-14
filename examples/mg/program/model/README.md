@@ -30,7 +30,10 @@ program/main.py
 - `search.py`: maps MG modes to current strategy configs:
   - `ga` -> `GaConfig`
   - `polish` -> `AlnsConfig`
-  - `evolutionary` -> `GaConfig` (with `local_improvement_strategy="lns"`)
+  - `evolutionary` -> `GaConfig`
+
+  Both GA modes expose only general termination, population, and crossover
+  controls. Mutation portfolios and local-improvement policies are internal.
 - `reports.py`: adds APS parity context, structured-edge diagnostics, production
   payload assembly, and SQLite output writes.
 - `rules.py`: owns MG scoring semantics.

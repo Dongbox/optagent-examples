@@ -23,5 +23,11 @@ def test_examples_match_the_current_public_api_surface() -> None:
         "TabuConfig",
         "solution.metadata",
         "parallel_workers=",
+        "mutation_count=",
+        "mutation_portfolio=",
+        "search_width=",
+        "duplicate_filter=",
+        "local_improvement_strategy=",
+        "local_improvement_top_k=",
     ):
         assert removed_api not in source
