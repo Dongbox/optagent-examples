@@ -9,7 +9,7 @@ from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "examples"))
 
-from steel.steel_sequence_external import load_steel_instances, solve_sequence_external
+from blackbox.steel_sequence_external import load_steel_instances, solve_sequence_external
 
 
 def parse_csv_or_repeat(values: list[str] | None) -> tuple[str, ...]:

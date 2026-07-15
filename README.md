@@ -1,74 +1,38 @@
 # OptAgent Examples
 
-Runnable examples for OptAgent live in this repository.
+Runnable examples for OptAgent live in this public repository. The maintained
+surface is organized around four problem categories plus a small quickstart:
 
-## Example Scope
-
-The examples are grouped by modeling and solve style:
-
-- `linear/`: algebraic LP/MIP models solved through direct exact APIs.
-- `scheduling/`: interval/sequence scheduling models solved through CP-SAT.
-- `blackbox/`: sequence objectives scored by Python functions and optimized by declared strategies.
-- `mps/`: MPS windows rebuilt into OptAgent models, with exact and strategy-driven modes.
-- `resource_flow/`: bundled CP and MILP resource-flow formulations.
-- `steel/`: two independent steel coil sequencing models, each declaring GA and ALNS strategies directly.
-- `mg/` and `cold_rolling/`: domain notebooks and MG SQLite migration tests.
-
-Cross-family behavior is expressed by strategy configuration, for example ALNS
-with exact repair, inside the problem examples that need it.
+- `examples/quickstart/`: general `solve`, linear `solve`/`solve_optx`, and CP-SAT.
+- `examples/linear/`: linear and mixed-integer models, including linearized TSP.
+- `examples/scheduling/`: basic, flexible, and resource-constrained scheduling.
+- `examples/blackbox/`: external evaluators that cannot be expressed structurally.
+- `examples/resource_flow/`: CP and MILP resource-flow formulations.
 
 ## Install
-
-Install OptAgent from the approved distribution for your environment, then
-install the example dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
 ```
 
-For source-based development from the private checkout, put the source tree on
-`PYTHONPATH` before the examples package.
-
 ## Run
 
-Run commands from the examples repository root:
+Run commands from the repository root:
 
 ```bash
-PYTHONPATH=. python examples/linear/assignment_optx.py
-PYTHONPATH=. python examples/linear/knapsack_mathopt.py
+PYTHONPATH=. python examples/quickstart/unified_solve.py
+PYTHONPATH=. python examples/linear/quickstart_linear_routes.py
+PYTHONPATH=. python examples/linear/routing_linearized_small.py
 PYTHONPATH=. python examples/scheduling/job_shop_small.py
-PYTHONPATH=. python examples/blackbox/tsp_blackbox_small.py
-PYTHONPATH=. python examples/steel/steel_sequence_external.py
-PYTHONPATH=. python examples/steel/steel_dag_path.py
-```
-
-From the private source checkout:
-
-```bash
-PYTHONPATH=../src:. python examples/linear/assignment_optx.py
-PYTHONPATH=../src:. python examples/linear/knapsack_mathopt.py
-PYTHONPATH=../src:. python examples/scheduling/job_shop_small.py
-PYTHONPATH=../src:. python examples/blackbox/tsp_blackbox_small.py
-PYTHONPATH=../src:. python examples/steel/steel_sequence_external.py
-PYTHONPATH=../src:. python examples/steel/steel_dag_path.py
+PYTHONPATH=. python examples/blackbox/steel_sequence_external.py
+PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation cp --summary-only
 ```
 
 ## Test
-
-Default example test collection covers the maintained example surface:
 
 ```bash
 python -m pytest -q
 ```
 
-To run explicitly from the private source checkout:
-
-```bash
-PYTHONPATH=../src:. python -m pytest -q
-```
-
-## Data Policy
-
-Only public, small, and reproducible data belongs here. Small SQLite, JSON, CSV,
-MPS, and compressed JSON fixtures are acceptable. Do not commit private business
-data, absolute private paths, credentials, or links to internal-only systems.
+Only small, public, reproducible data belongs here. The examples prefer exact
+algebraic or structured models whenever the problem can be expressed that way.

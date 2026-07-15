@@ -1,33 +1,45 @@
-# Resource Flow Examples
+<!-- --8<-- [start:problem] -->
+# 资源流与网络流
 
-This directory contains a bundled OptAgent `resource_flow` example adapted from
-an APS-style resource-flow project.
+## 问题概览
 
-Included pieces:
+资源流问题描述资源在时间窗口、工序或设备之间的转移与消耗。它与网络
+流共享节点、边、容量、流量守恒和成本等结构，但资源流通常还包含时间、
+批次、设备和生产计划语义。
 
-- [case_loader.py](../resource_flow/case_loader.py): loads bundled `zj` case snapshots.
-- [cp_builder.py](../resource_flow/cp_builder.py): CP-SAT oriented single-window formulation.
-- [milp_builder.py](../resource_flow/milp_builder.py): algebraic MILP formulation.
-- [solve_case.py](../resource_flow/solve_case.py): direct exact and strategy-driven solve entrypoint.
-- [rolling.py](../resource_flow/rolling.py): workflow-layer CP rolling-window runner.
-- [compare_original.py](../resource_flow/compare_original.py): migration-only comparison against the original project.
+## 需求定义
 
-Run from the examples repository root:
+- **输入**：资源、任务、时间窗口、设备容量、转移关系和初始状态。
+- **决策**：每个任务的流向、开始时间、处理方式和资源使用量。
+- **约束**：流量守恒、设备容量、时间顺序、库存或状态转移。
+- **目标**：最小化生产成本、延期、切换和资源浪费。
 
-```bash
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation cp --summary-only
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation milp --summary-only
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation cp --mode exact
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation cp --mode alns
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation milp --mode exact --backend optx
-PYTHONPATH=. python examples/resource_flow/solve_case.py --formulation milp --mode exact --backend mathopt_mp
-```
+## 规模与数据来源
 
-Solve modes:
+规模主要由时间窗口数、任务数、资源节点数、转移边数和容量维度决定。
+经典最大流、最小费用流等网络流问题可以作为相邻问题参考；当前公开
+可运行案例聚焦于带生产时间语义的资源流，数据使用仓库内小型、可复现
+的压缩 JSON fixture。
 
-- `exact`: `solve_cpsat(...)` for CP formulation, `solve_milp(...)` for MILP formulation.
-- `ga`: `solve(...)` with `GaConfig`.
-- `alns`: `solve(...)` with `AlnsConfig` and exact repair enabled.
+## 建模方案
 
-Default bundled behavior is self-contained for the shipped `planning_period=3`
-`zj` case. `compare_original.py` still needs an external original-project checkout.
+同一问题提供两种结构化表达：`cp_builder.py` 用整数时间和容量语义构造
+CP 模型，`milp_builder.py` 用代数变量和线性约束构造 MILP。两者都使用
+`ModelBuilder`，差异在于表达式图和直接求解后端，而不是业务需求本身。
+
+## 求解方案
+
+- CP 表达完整时使用 `solve_cpsat(...)`。
+- 代数模型需要 OptX 时使用 `solve_milp(..., backend="optx")` 或
+  `solve_optx(...)`。
+- 对含外部评估器的扩展场景才使用 `solve(...)`；资源流本身不默认使用
+  黑盒策略。
+<!-- --8<-- [end:problem] -->
+
+## 示例文件
+
+- [case_loader.py](../resource_flow/case_loader.py)：加载小型可复现案例。
+- [cp_builder.py](../resource_flow/cp_builder.py)：CP-SAT 表达。
+- [milp_builder.py](../resource_flow/milp_builder.py)：MILP 表达。
+- [solve_case.py](../resource_flow/solve_case.py)：统一运行入口。
+- [rolling.py](../resource_flow/rolling.py)：滚动时间窗工作流。

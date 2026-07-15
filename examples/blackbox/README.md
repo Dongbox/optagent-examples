@@ -1,23 +1,37 @@
-# Blackbox Examples
+<!-- --8<-- [start:problem] -->
+# 黑盒优化
 
-Blackbox examples keep business scoring in Python and let OptAgent search over
-sequence variables. They use `solve(...)` with explicit strategy objects.
+## 问题概览
 
-Typical shape:
+黑盒问题的目标或约束无法可靠地展开成 OptAgent 的变量、表达式和约束，
+而必须调用外部模拟器、遗留业务代码、机器学习模型或远程评估服务。
 
-```python
-solution = solve(program, strategy=GaConfig(max_iterations=60))
-```
+## 需求定义
 
-Included examples:
+- **输入**：待搜索的决策变量，以及外部评估器需要的业务数据。
+- **决策**：通常是序列、连续参数或离散配置。
+- **约束**：可在模型中表达的约束直接建模；只能由外部函数判断的约束由评估器返回。
+- **目标**：由 Python 评估函数返回成本、收益或惩罚值。
 
-- [routing_heuristic.py](../blackbox/routing_heuristic.py)
-  Route ordering scored by a Python function and solved by `GaConfig`.
-- [tsp_blackbox_small.py](../blackbox/tsp_blackbox_small.py)
-  Small TSP-style path optimized with GA search.
-- [tsp_evolutionary_small.py](../blackbox/tsp_evolutionary_small.py)
-  The same kind of sequence objective optimized with `GaConfig`. Because the
-  objective is an external callback, it uses generic sequence GA behavior rather
-  than compiler-proven TSP-specific local search; both policies remain internal.
-- [steel_transition_sequence.py](../blackbox/steel_transition_sequence.py)
-  Compatibility entrypoint that forwards to the canonical steel sequence example.
+## 规模与数据来源
+
+复杂度主要由决策变量数量、外部评估单次耗时、评估器可缓存性和约束检查
+成本决定。钢卷示例使用仓库内小型、可复现的 `data/steel_coils.json`，不
+依赖内部业务数据或外部服务。
+
+## 建模方案
+
+使用 `ModelBuilder.external_call(...)` 注册纯函数或可复现的外部评估器，
+再用 `solve(...)` 调用通用求解路径。TSP、线性路径和固定调度不属于本页
+的默认案例；它们应优先使用结构化精确建模。
+
+## 求解方案
+
+黑盒问题没有可直接交给 MILP 或 CP-SAT 的完整表达式图，因此使用
+`solve(...)`。只有在确实需要搜索外部评估函数时，才显式配置 `GaConfig`
+或其他公开策略；简单的线性、路径和调度问题不应为了展示策略而改写成黑盒。
+<!-- --8<-- [end:problem] -->
+
+## 示例文件
+
+- [steel_sequence_external.py](../blackbox/steel_sequence_external.py)：钢卷顺序的外部兼容性评估。
