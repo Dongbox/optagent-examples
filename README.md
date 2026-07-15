@@ -36,3 +36,15 @@ python -m pytest -q
 
 Only small, public, reproducible data belongs here. The examples prefer exact
 algebraic or structured models whenever the problem can be expressed that way.
+
+## Test Ownership
+
+- MPS, MG and cold-rolling tests were removed with those non-public example
+  surfaces; no replacement owner is required because the features are no
+  longer part of the downloadable examples.
+- `tests/test_blackbox_steel_examples.py` owns the retained external-callback
+  blackbox case.
+- `tests/test_examples_resource_flow.py` and the maintained linear/scheduling
+  example tests own the public resource-flow, linear and scheduling cases.
+- Core API and kernel behavior remains owned by the private OptAgent repository;
+  this repository only tests the public example contract.
