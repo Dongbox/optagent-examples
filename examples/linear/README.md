@@ -37,6 +37,46 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 - 结构化序列成本完整落在 CP-SAT 支持范围内时使用 `solve_cpsat(...)`。
 <!-- --8<-- [end:problem] -->
 
+<!-- --8<-- [start:assignment] -->
+## 指派问题
+
+每个工人必须分配到一个任务，每个任务也必须被一名工人承担；收益由工人和
+任务的组合决定。使用二元变量、唯一分配约束和线性收益目标即可表达。
+
+`assignment_optx.py` 通过 `solve_milp(..., backend="optx")` 调用 OptX 精确
+混合整数后端，适合需要明确最优性语义的指派模型。
+<!-- --8<-- [end:assignment] -->
+
+<!-- --8<-- [start:knapsack] -->
+## 背包问题
+
+在总容量有限时选择物品，使总价值最大。每个物品只有选择或不选择两种
+状态，容量约束和价值目标构成一个 0/1 混合整数模型。
+
+`knapsack_mathopt.py` 保持 `ModelBuilder` 的业务表达不变，通过 MathOpt MP
+适配器求解，适合需要第三方 MP 后端的场景。
+<!-- --8<-- [end:knapsack] -->
+
+<!-- --8<-- [start:facility] -->
+## 设施选址
+
+在固定开设成本和客户服务成本之间做权衡：决定开设哪些设施，并把每个客户
+分配给一个已开设设施。开设变量、分配变量、容量和服务半径共同形成模型。
+
+`facility_location_small.py` 使用整数变量表达开设与分配，并通过 MILP 路径
+求解。
+<!-- --8<-- [end:facility] -->
+
+<!-- --8<-- [start:routing] -->
+## 路径与 TSP
+
+给定节点和距离，要求每个节点恰好访问一次并回到起点，使总距离最小。弧
+选择变量负责访问关系，入度/出度约束形成闭环，MTZ 顺序变量消除子回路。
+
+`routing_linearized_small.py` 将 TSP 显式线性化后交给 OptX；简单 TSP 不应
+为了展示策略而改写成黑盒模型。
+<!-- --8<-- [end:routing] -->
+
 ## 示例文件
 
 - [assignment_optx.py](../linear/assignment_optx.py)：二元指派和 OptX 精确求解。

@@ -40,6 +40,33 @@ Flexible Job Shop 和资源约束项目调度。
   或无法展开的业务函数时，才进入黑盒求解路径。
 <!-- --8<-- [end:problem] -->
 
+<!-- --8<-- [start:job_shop] -->
+## 基础 Job Shop
+
+每个工件按固定工序访问指定机器，工序之间有先后关系，同一机器上的工序
+不能重叠，目标通常是最小化最大完工时间。`job_shop_small.py` 使用统一
+`ModelBuilder` 的 interval、`no_overlap` 和 `precedence` 表达这些约束，
+适合作为固定机器调度的最小模型。
+<!-- --8<-- [end:job_shop] -->
+
+<!-- --8<-- [start:flow_shop] -->
+## Flow Shop
+
+所有工件按相同的工序顺序经过多个阶段。除阶段内容量外，还要把同一个工件
+在前后阶段的完成/开始关系串起来。`flow_shop_cp_sat.py` 使用 sequence、
+interval 和 precedence 描述该结构，并通过 CP-SAT 求解。
+<!-- --8<-- [end:flow_shop] -->
+
+<!-- --8<-- [start:flexible_job_shop] -->
+## 柔性 Job Shop
+
+同一工序可以选择多个候选机器，不同机器的加工时长可能不同；还可能存在
+共享操作员或其他累计资源。`flexible_job_shop_small.py` 使用
+`SchedulingModel` 的 task、alternative、`exactly_one_alternative` 和
+`chain` 组织任务语义，再用 unary/cumulative resource 施加容量约束。
+这类可选执行方式是调度 facade 的典型使用场景。
+<!-- --8<-- [end:flexible_job_shop] -->
+
 ## 示例文件
 
 - [job_shop_small.py](../scheduling/job_shop_small.py)：基础 Job Shop。

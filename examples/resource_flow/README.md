@@ -36,6 +36,23 @@ CP 模型，`milp_builder.py` 用代数变量和线性约束构造 MILP。两者
   黑盒策略。
 <!-- --8<-- [end:problem] -->
 
+<!-- --8<-- [start:solve_case] -->
+## 资源流统一求解
+
+资源流案例需要在多个时间窗口内安排需求、库存和生产转移，同时满足节点
+容量、流量守恒和交付约束。`solve_case.py` 是统一运行入口：同一份业务
+输入可以选择 CP 或 MILP 结构化表达，再调用对应的精确后端。
+<!-- --8<-- [end:solve_case] -->
+
+<!-- --8<-- [start:rolling] -->
+## 滚动时间窗
+
+当完整规划期过大或未来状态会随着执行更新时，可在有限窗口内反复建模和
+求解，把已执行窗口的库存与状态传递给下一窗口。`rolling.py` 保留上一窗口
+的命名变量值作为 warm start，并通过 `advance_window_input` 推进业务输入。
+这仍是结构化 CP-SAT 工作流，不需要黑盒策略。
+<!-- --8<-- [end:rolling] -->
+
 ## 示例文件
 
 - [case_loader.py](../resource_flow/case_loader.py)：加载小型可复现案例。
