@@ -8,7 +8,7 @@ import sys
 import time
 from typing import Any
 
-from optagent import AlnsConfig, ExternalCallbackContext, GaConfig, ModelBuilder, solve
+from optagent import ExternalCallbackContext, GaConfig, ModelBuilder, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -164,10 +164,6 @@ def metadata_summary(metadata: dict[str, Any]) -> dict[str, Any]:
         "ga_generation_count",
         "ga_mutation_portfolio",
         "ga_tabu_improvement_count",
-        "alns_iterations",
-        "alns_candidates_evaluated",
-        "alns_candidates_accepted",
-        "alns_acceptance_model",
     )
     return {key: metadata[key] for key in keys if key in metadata}
 
@@ -230,30 +226,7 @@ def solve_sequence_external(
         elapsed_seconds=time.monotonic() - started,
     )
 
-    started = time.monotonic()
-    alns_solution = solve(
-        model.program,
-        strategy=AlnsConfig(
-            max_iterations=max_iterations,
-            destroy_count=3,
-            repair_operators=("greedy", "beam"),
-            acceptance="not_worse",
-        ),
-        seed=seed,
-        threads=1,
-        time_limit_s=time_limit_s,
-        trace_output="summary",
-        trace_limit=trace_limit,
-    )
-    alns_row = summarize_solution(
-        model=model,
-        instance=instance,
-        solution=alns_solution,
-        strategy_name="alns",
-        elapsed_seconds=time.monotonic() - started,
-    )
-
-    rows = [ga_row, alns_row]
+    rows = [ga_row]
     best = min(rows, key=lambda row: (row["objective"], row["elapsed_seconds"]))
     return {
         "modeling": "sequence_external_callback",
@@ -288,7 +261,7 @@ def print_summary(payload: dict[str, Any]) -> None:
 
 def main() -> int:
     instances = load_steel_instances()
-    parser = argparse.ArgumentParser(description="Solve the steel sequence graph IR model with GA and ALNS.")
+    parser = argparse.ArgumentParser(description="Solve the steel sequence graph IR model with GA.")
     parser.add_argument("--instance", choices=tuple(instances), default="toy")
     parser.add_argument("--seed", type=int, default=11)
     parser.add_argument("--max-iterations", type=int, default=120)

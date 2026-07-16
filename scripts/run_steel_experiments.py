@@ -37,7 +37,7 @@ def write_json_output(path: Path, payload: object) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     instances = load_steel_instances()
     parser = argparse.ArgumentParser(
-        description="Run repeatable steel sequence graph IR GA-vs-ALNS comparisons across one instance.",
+        description="Run repeatable steel sequence graph IR GA evaluations across one instance.",
     )
     parser.add_argument("--instance", choices=tuple(instances), default="bundled_head40")
     parser.add_argument(

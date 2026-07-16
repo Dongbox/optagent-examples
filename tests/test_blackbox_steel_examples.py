@@ -21,7 +21,7 @@ def test_sequence_external_model_scoring_matches_domain_semantics() -> None:
     assert transition.kind.value == "external_call"
 
 
-def test_sequence_external_callback_runs_ga_and_alns_on_toy() -> None:
+def test_sequence_external_callback_runs_ga_on_toy() -> None:
     instance = steel_sequence_external.load_steel_instances()["toy"]
     payload = steel_sequence_external.solve_sequence_external(
         instance=instance,
@@ -34,7 +34,7 @@ def test_sequence_external_callback_runs_ga_and_alns_on_toy() -> None:
 
     rows = {row["strategy"]: row for row in payload["strategies"]}
     assert payload["modeling"] == "sequence_external_callback"
-    assert set(rows) == {"ga", "alns"}
+    assert set(rows) == {"ga"}
     for row in rows.values():
         assert sorted(row["sequence"]) == list(range(len(instance.coils)))
         assert row["objective"] == steel_sequence_external.analyze_sequence(row["sequence"], instance.coils)["transition_count"]
