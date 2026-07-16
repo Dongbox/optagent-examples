@@ -19,24 +19,25 @@ def build_model() -> object:
     shared_operator = schedule.cumulative_resource("shared_operator", capacity=1)
 
     cutting = schedule.task("cutting")
-    cutting.alternative(resource=machine_a, duration=3, demands={shared_operator: 1})
-    cutting.alternative(resource=machine_b, duration=4, demands={shared_operator: 1})
-    schedule.exactly_one_alternative(cutting)
+    cutting.alternative(resource=machine_a, duration=3, requirements={shared_operator: 1})
+    cutting.alternative(resource=machine_b, duration=4, requirements={shared_operator: 1})
+    cutting.exactly_one_alternative()
 
     drilling = schedule.task("drilling")
-    drilling.alternative(resource=machine_a, duration=4, demands={shared_operator: 1})
-    drilling.alternative(resource=machine_b, duration=2, demands={shared_operator: 1})
-    schedule.exactly_one_alternative(drilling)
+    drilling.alternative(resource=machine_a, duration=4, requirements={shared_operator: 1})
+    drilling.alternative(resource=machine_b, duration=2, requirements={shared_operator: 1})
+    drilling.exactly_one_alternative()
 
     packing = schedule.task("packing")
-    packing.alternative(resource=machine_b, duration=2, demands={shared_operator: 1})
+    packing.alternative(resource=machine_b, duration=2, requirements={shared_operator: 1})
 
     machine_a.no_overlap()
     machine_b.no_overlap()
     shared_operator.cumulative()
     schedule.chain([cutting, drilling, packing])
     builder.minimize(schedule.makespan(), name="makespan")
-    return schedule.apply()
+    schedule.validate()
+    return builder.freeze()
 
 
 def main() -> None:
