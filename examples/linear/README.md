@@ -27,14 +27,12 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 不需要使用 Python 黑盒评分函数。
 
 对于只包含有界整数和结构化序列转移成本的模型，也可以使用
-`sequence_var` + `sequence_transition_sum`，再选择 CP-SAT 路径。
+`sequence_var` + `sequence_transition_sum`，再选择统一的 `solve(...)` 路径。
 
 ## 求解方案
 
-- 需要通用、快速验证模型时使用 `solve(...)`。
-- 线性或混合整数模型需要 OptX 精确路径时使用 `solve_optx(...)`。
-- 需要通过 MP 语义选择后端时使用 `solve_milp(...)`。
-- 结构化序列成本完整落在 CP-SAT 支持范围内时使用 `solve_cpsat(...)`。
+- 示例默认使用 `solve(...)`，快速验证统一建模和求解路径。
+- 同一份模型需要 OptX 精确路径时，可切换到 `solve_optx(...)`；完整代码以注释保留切换方式。
 <!-- --8<-- [end:problem] -->
 
 <!-- --8<-- [start:assignment] -->
@@ -43,8 +41,8 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 每个工人必须分配到一个任务，每个任务也必须被一名工人承担；收益由工人和
 任务的组合决定。使用二元变量、唯一分配约束和线性收益目标即可表达。
 
-`assignment_optx.py` 通过 `solve_milp(..., backend="optx")` 调用 OptX 精确
-混合整数后端，适合需要明确最优性语义的指派模型。
+`assignment_optx.py` 默认使用 `solve(...)`，并在求解处保留
+`solve_optx(...)` 的 OptX 精确路径注释。
 <!-- --8<-- [end:assignment] -->
 
 <!-- --8<-- [start:knapsack] -->
@@ -53,8 +51,8 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 在总容量有限时选择物品，使总价值最大。每个物品只有选择或不选择两种
 状态，容量约束和价值目标构成一个 0/1 混合整数模型。
 
-`knapsack_mathopt.py` 保持 `ModelBuilder` 的业务表达不变，通过 MathOpt MP
-适配器求解，适合需要第三方 MP 后端的场景。
+`knapsack_mathopt.py` 默认使用 `solve(...)`；如需精确求解，可按代码注释切换到
+`solve_optx(...)`。
 <!-- --8<-- [end:knapsack] -->
 
 <!-- --8<-- [start:facility] -->
@@ -63,8 +61,8 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 在固定开设成本和客户服务成本之间做权衡：决定开设哪些设施，并把每个客户
 分配给一个已开设设施。开设变量、分配变量、容量和服务半径共同形成模型。
 
-`facility_location_small.py` 使用整数变量表达开设与分配，并通过 MILP 路径
-求解。
+`facility_location_small.py` 使用整数变量表达开设与分配，默认通过统一的
+`solve(...)` 入口求解。
 <!-- --8<-- [end:facility] -->
 
 <!-- --8<-- [start:routing] -->
@@ -73,14 +71,14 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 给定节点和距离，要求每个节点恰好访问一次并回到起点，使总距离最小。弧
 选择变量负责访问关系，入度/出度约束形成闭环，MTZ 顺序变量消除子回路。
 
-`routing_linearized_small.py` 将 TSP 显式线性化后交给 OptX；简单 TSP 不应
-为了展示策略而改写成黑盒模型。
+`routing_linearized_small.py` 将 TSP 显式线性化后交给统一的 `solve(...)`；
+代码中保留了切换到 `solve_optx(...)` 的实现注释。
 <!-- --8<-- [end:routing] -->
 
 ## 示例文件
 
-- [assignment_optx.py](../linear/assignment_optx.py)：二元指派和 OptX 精确求解。
-- [knapsack_mathopt.py](../linear/knapsack_mathopt.py)：0/1 背包和第三方 MathOpt MP 适配器。
+- [assignment_optx.py](../linear/assignment_optx.py)：二元指派和两种求解入口。
+- [knapsack_mathopt.py](../linear/knapsack_mathopt.py)：0/1 背包和两种求解入口。
 - [facility_location_small.py](../linear/facility_location_small.py)：设施开设与分配。
 - [routing_linearized_small.py](../linear/routing_linearized_small.py)：线性化 TSP。
 
@@ -105,6 +103,6 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 
 如果问题只需要一个有界整数距离矩阵，也可以用
 `sequence_transition_sum(..., include_return_edge=True)` 表达闭环成本，
-并通过 `solve_cpsat(...)` 求解。该路线仍然是结构化精确建模，不是黑盒
+并通过统一的 `solve(...)` 求解。该路线仍然是结构化建模，不是黑盒
 优化。包含外部模拟器或不可展开评分逻辑时，才转到黑盒问题页。
 <!-- --8<-- [end:tsp] -->

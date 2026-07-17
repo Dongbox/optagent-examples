@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import MilpConfig, ModelBuilder, solve_milp
+from optagent import ModelBuilder, solve
+# from optagent import OptxConfig, solve_optx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -63,9 +64,11 @@ def build_model() -> object:
 
 def main() -> None:
     program = build_model()
-    solution = solve_milp(program, config=MilpConfig(backend="optx", time_limit_s=10.0))
+    solution = solve(program, time_limit_s=10.0, seed=7, threads=1, log_level="on")
+    # To use the OptX exact solver instead, replace the line above with:
+    # solution = solve_optx(program, config=OptxConfig(time_limit_s=10.0, threads=1))
     print_solution(
-        "small routing solved as linearized MILP through internal OptX",
+        "small routing solved by unified solve",
         solution,
         extra={"distance_matrix": {f"{i}->{j}": cost for (i, j), cost in DIST.items()}},
     )

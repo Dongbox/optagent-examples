@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
-import json
 
-from optagent import MilpConfig, ModelBuilder, solve_milp
-from optagent.exact import exact_backend_registry
+from optagent import ModelBuilder, solve
+# from optagent import OptxConfig, solve_optx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -39,30 +38,10 @@ def build_model() -> tuple[object, dict[str, object]]:
 
 def main() -> None:
     program, data = build_model()
-    optx_backend = exact_backend_registry()["optx"].backend
-    if not optx_backend.is_available():
-        print(
-            json.dumps(
-                {
-                    "title": "assignment solved by internal OptX MP backend",
-                    "status": "skipped",
-                    "backend": "optx",
-                    "reason": optx_backend.availability_error(),
-                    "extra": data,
-                },
-                indent=2,
-                ensure_ascii=True,
-            )
-        )
-        return
-    solution = solve_milp(
-        program,
-        config=MilpConfig(
-            backend="optx",
-            time_limit_s=10.0,
-        ),
-    )
-    print_solution("assignment solved by internal OptX MP backend", solution, extra=data)
+    solution = solve(program, time_limit_s=10.0, seed=7, threads=1, log_level="on")
+    # To use the OptX exact solver instead, replace the line above with:
+    # solution = solve_optx(program, config=OptxConfig(time_limit_s=10.0, threads=1))
+    print_solution("assignment solved by unified solve", solution, extra=data)
 
 
 if __name__ == "__main__":

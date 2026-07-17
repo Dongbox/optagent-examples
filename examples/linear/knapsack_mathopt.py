@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import MilpConfig, ModelBuilder, solve_milp
+from optagent import ModelBuilder, solve
+# from optagent import OptxConfig, solve_optx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -26,14 +27,10 @@ def build_model() -> tuple[object, dict[str, object]]:
 
 def main() -> None:
     program, data = build_model()
-    solution = solve_milp(
-        program,
-        config=MilpConfig(
-            backend="mathopt_mp",
-            time_limit_s=10.0,
-        ),
-    )
-    print_solution("0/1 knapsack solved by external MathOpt MP backend", solution, extra=data)
+    solution = solve(program, time_limit_s=10.0, seed=7, threads=1, log_level="on")
+    # To use the OptX exact solver instead, replace the line above with:
+    # solution = solve_optx(program, config=OptxConfig(time_limit_s=10.0, threads=1))
+    print_solution("0/1 knapsack solved by unified solve", solution, extra=data)
 
 
 if __name__ == "__main__":
