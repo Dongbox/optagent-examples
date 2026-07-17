@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import CpSatConfig, ModelBuilder, SchedulingModel, solve_cpsat
+from optagent import ModelBuilder, SchedulingModel, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -41,11 +41,8 @@ def build_model() -> object:
 
 
 def main() -> None:
-    solution = solve_cpsat(
-        build_model(),
-        config=CpSatConfig(time_limit_s=10.0, workers=1),
-    )
-    print_solution("flexible job shop solved by SchedulingModel and CP-SAT", solution)
+    solution = solve(build_model(), time_limit_s=10.0, seed=7, threads=1, log_level="on")
+    print_solution("flexible job shop solved by SchedulingModel and unified solve", solution)
 
 
 if __name__ == "__main__":

@@ -33,9 +33,9 @@ Flexible Job Shop 和资源约束项目调度。
 
 ## 求解方案
 
-- 调度模型完整落在 CP-SAT 支持范围内时，优先使用 `solve_cpsat(...)`。
-- 需要快速验证统一模型，或模型包含尚未映射到精确后端的结构时，可使用
-  `solve(...)`。
+- 调度示例统一使用 `solve(...)`，由 OptAgent 的策略路径处理模型。
+- 只有在明确需要验证某个精确后端兼容性时，才在 API 参考中选择对应的 direct
+  exact 接口。
 - 不把黑盒策略作为固定调度问题的默认建模方式；只有目标依赖外部仿真器
   或无法展开的业务函数时，才进入黑盒求解路径。
 <!-- --8<-- [end:problem] -->
@@ -53,8 +53,8 @@ Flexible Job Shop 和资源约束项目调度。
 ## Flow Shop
 
 所有工件按相同的工序顺序经过多个阶段。除阶段内容量外，还要把同一个工件
-在前后阶段的完成/开始关系串起来。`flow_shop_cp_sat.py` 使用 sequence、
-interval 和 precedence 描述该结构，并通过 CP-SAT 求解。
+在前后阶段的完成/开始关系串起来。`flow_shop.py` 使用 sequence、interval
+和 precedence 描述该结构，并通过统一的 `solve(...)` 入口求解。
 <!-- --8<-- [end:flow_shop] -->
 
 <!-- --8<-- [start:flexible_job_shop] -->
@@ -70,5 +70,5 @@ interval 和 precedence 描述该结构，并通过 CP-SAT 求解。
 ## 示例文件
 
 - [job_shop_small.py](../scheduling/job_shop_small.py)：基础 Job Shop。
-- [flow_shop_cp_sat.py](../scheduling/flow_shop_cp_sat.py)：Flow Shop 和 CP-SAT。
+- [flow_shop.py](../scheduling/flow_shop.py)：Flow Shop。
 - 复杂柔性调度应沿用第二、第三层建模路径扩展，并保持需求说明与代码同步。

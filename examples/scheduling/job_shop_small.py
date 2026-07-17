@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from optagent import CpSatConfig, ModelBuilder, solve_cpsat
+from optagent import ModelBuilder, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -30,14 +30,8 @@ def build_model() -> tuple[object, dict[str, int]]:
 
 def main() -> None:
     program, sequence_ids = build_model()
-    solution = solve_cpsat(
-        program,
-        config=CpSatConfig(
-            time_limit_s=10.0,
-            workers=1,
-        ),
-    )
-    print_solution("small job shop solved by CP-SAT exact API", solution, extra={"machine_sequences": sequence_ids})
+    solution = solve(program, time_limit_s=10.0, seed=7, threads=1, log_level="on")
+    print_solution("small job shop solved by unified solve", solution, extra={"machine_sequences": sequence_ids})
 
 
 if __name__ == "__main__":
