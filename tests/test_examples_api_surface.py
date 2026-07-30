@@ -29,5 +29,9 @@ def test_examples_match_the_current_public_api_surface() -> None:
         "duplicate_filter=",
         "local_improvement_strategy=",
         "local_improvement_top_k=",
+        "algorithm=",
+        "strategy=",
+        "GaConfig",
+        "CblsConfig",
     ):
         assert removed_api not in source

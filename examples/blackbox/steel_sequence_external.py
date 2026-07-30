@@ -8,7 +8,7 @@ import sys
 import time
 from typing import Any
 
-from optagent import ExternalCallbackContext, GaConfig, ModelBuilder, solve
+from optagent import ExternalCallbackContext, ModelBuilder, solve
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -127,6 +127,7 @@ def build_sequence_external_model(instance: SteelCoilInstance) -> SequenceExtern
         name="coil_sequence",
     )
     builder.constraint(builder.sequence_contains(coil_sequence, 0), name="contains_first_coil")
+
     def transition_count_callback(ctx: ExternalCallbackContext) -> int:
         sequence = [int(item) for item in ctx.value(coil_sequence)]
         return transition_count(sequence, instance.coils)
@@ -152,7 +153,7 @@ def build_sequence_external_model(instance: SteelCoilInstance) -> SequenceExtern
 
 def metadata_summary(metadata: dict[str, Any]) -> dict[str, Any]:
     keys = (
-        "strategy",
+        "algorithm",
         "execution_graph_strategy",
         "termination_reason",
         "iterations",
@@ -173,13 +174,13 @@ def summarize_solution(
     model: SequenceExternalModel,
     instance: SteelCoilInstance,
     solution: Any,
-    strategy_name: str,
+    algorithm_name: str,
     elapsed_seconds: float,
 ) -> dict[str, Any]:
     sequence = [int(item) for item in solution.variable_values[model.sequence_node_id]]
     diagnostics = analyze_sequence(sequence, instance.coils)
     return {
-        "strategy": strategy_name,
+        "algorithm": algorithm_name,
         "solver_name": solution.solver_name,
         "status": solution.status.value,
         "feasible": solution.feasible,
@@ -197,8 +198,6 @@ def solve_sequence_external(
     *,
     instance: SteelCoilInstance,
     seed: int = 11,
-    max_iterations: int = 120,
-    population_size: int = 12,
     time_limit_s: float = 30.0,
     trace_limit: int = 8,
 ) -> dict[str, Any]:
@@ -206,35 +205,29 @@ def solve_sequence_external(
     default = analyze_sequence(model.default_sequence, instance.coils)
 
     started = time.monotonic()
-    ga_solution = solve(
+    portfolio_solution = solve(
         model.program,
-        strategy=GaConfig(
-            max_iterations=max_iterations,
-            population_size=population_size,
-        ),
         seed=seed,
         threads=1,
         time_limit_s=time_limit_s,
         trace_output="summary",
         trace_limit=trace_limit,
     )
-    ga_row = summarize_solution(
+    portfolio_row = summarize_solution(
         model=model,
         instance=instance,
-        solution=ga_solution,
-        strategy_name="ga",
+        solution=portfolio_solution,
+        algorithm_name="portfolio",
         elapsed_seconds=time.monotonic() - started,
     )
 
-    rows = [ga_row]
+    rows = [portfolio_row]
     best = min(rows, key=lambda row: (row["objective"], row["elapsed_seconds"]))
     return {
         "modeling": "sequence_external_callback",
         "instance": instance.name,
         "coil_count": len(instance.coils),
         "seed": seed,
-        "max_iterations": max_iterations,
-        "population_size": population_size,
         "time_limit_s": time_limit_s,
         "model": {
             "default_sequence_head": model.default_sequence[:20],
@@ -242,8 +235,8 @@ def solve_sequence_external(
             "graph_node_count": len(model.program.graph.nodes),
             "objective_ids": list(model.program.objective_ids),
         },
-        "strategies": rows,
-        "best_strategy": best["strategy"],
+        "solutions": rows,
+        "best_algorithm": best["algorithm"],
         "best_objective": best["objective"],
         "best_sequence_head": best["sequence_head"],
     }
@@ -253,19 +246,17 @@ def print_summary(payload: dict[str, Any]) -> None:
     print(f"instance: {payload['instance']}")
     print(f"modeling: {payload['modeling']}")
     print(f"default_objective: {payload['model']['default_objective']}")
-    for row in payload["strategies"]:
-        print(f"{row['strategy']}: objective={row['objective']} elapsed={row['elapsed_seconds']:.4f}s")
-    print(f"best_strategy: {payload['best_strategy']}")
+    for row in payload["solutions"]:
+        print(f"{row['algorithm']}: objective={row['objective']} elapsed={row['elapsed_seconds']:.4f}s")
+    print(f"best_algorithm: {payload['best_algorithm']}")
     print(f"best_objective: {payload['best_objective']}")
 
 
 def main() -> int:
     instances = load_steel_instances()
-    parser = argparse.ArgumentParser(description="Solve the steel sequence graph IR model with GA.")
+    parser = argparse.ArgumentParser(description="Solve the steel sequence graph IR model with automatic search.")
     parser.add_argument("--instance", choices=tuple(instances), default="toy")
     parser.add_argument("--seed", type=int, default=11)
-    parser.add_argument("--max-iterations", type=int, default=120)
-    parser.add_argument("--population-size", type=int, default=12)
     parser.add_argument("--time-limit-s", type=float, default=30.0)
     parser.add_argument("--trace-limit", type=int, default=8)
     parser.add_argument("--summary", action="store_true", help="Print a compact text summary instead of JSON.")
@@ -275,8 +266,6 @@ def main() -> int:
     payload = solve_sequence_external(
         instance=instance,
         seed=args.seed,
-        max_iterations=args.max_iterations,
-        population_size=args.population_size,
         time_limit_s=args.time_limit_s,
         trace_limit=args.trace_limit,
     )

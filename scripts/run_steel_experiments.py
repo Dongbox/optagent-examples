@@ -37,7 +37,7 @@ def write_json_output(path: Path, payload: object) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     instances = load_steel_instances()
     parser = argparse.ArgumentParser(
-        description="Run repeatable steel sequence graph IR GA evaluations across one instance.",
+        description="Run repeatable steel sequence graph IR automatic-search evaluations across one instance.",
     )
     parser.add_argument("--instance", choices=tuple(instances), default="bundled_head40")
     parser.add_argument(
@@ -46,8 +46,6 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="seeds",
         help="Random seed. Repeat the flag or provide a comma-separated list. Default: 0.",
     )
-    parser.add_argument("--max-iterations", type=int, default=120)
-    parser.add_argument("--population-size", type=int, default=12)
     parser.add_argument("--time-limit-s", type=float, default=30.0)
     parser.add_argument("--json", action="store_true", help="Print the full experiment payload as JSON.")
     parser.add_argument("--json-output", type=Path, help="Optional path to write the full experiment payload as JSON.")
@@ -58,8 +56,6 @@ def _payload(
     *,
     instance_name: str,
     seeds: tuple[int, ...],
-    max_iterations: int,
-    population_size: int,
     time_limit_s: float,
 ) -> dict[str, object]:
     instance = load_steel_instances()[instance_name]
@@ -67,28 +63,24 @@ def _payload(
         solve_sequence_external(
             instance=instance,
             seed=seed,
-            max_iterations=max_iterations,
-            population_size=population_size,
             time_limit_s=time_limit_s,
         )
         for seed in seeds
     ]
     best_objective = min(run["best_objective"] for run in runs)
     best_counts = {
-        strategy: sum(1 for run in runs if run["best_strategy"] == strategy)
-        for strategy in sorted({run["best_strategy"] for run in runs})
+        algorithm: sum(1 for run in runs if run["best_algorithm"] == algorithm)
+        for algorithm in sorted({run["best_algorithm"] for run in runs})
     }
     return {
         "instance": instance.name,
         "seeds": list(seeds),
-        "max_iterations": max_iterations,
-        "population_size": population_size,
         "time_limit_s": time_limit_s,
         "aggregate": {
             "run_count": len(runs),
             "best_objective": best_objective,
             "mean_best_objective": sum(run["best_objective"] for run in runs) / len(runs),
-            "best_strategy_counts": best_counts,
+            "best_algorithm_counts": best_counts,
         },
         "runs": runs,
     }
@@ -101,7 +93,7 @@ def _print_human_summary(payload: dict[str, object]) -> None:
     print(f"seeds: {', '.join(str(seed) for seed in payload['seeds'])}")
     print(f"best_objective: {aggregate['best_objective']}")
     print(f"mean_best_objective: {aggregate['mean_best_objective']:.4f}")
-    print(f"best_strategy_counts: {aggregate['best_strategy_counts']}")
+    print(f"best_algorithm_counts: {aggregate['best_algorithm_counts']}")
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -110,8 +102,6 @@ def main(argv: Iterable[str] | None = None) -> int:
     payload = _payload(
         instance_name=args.instance,
         seeds=parse_seeds(args.seeds),
-        max_iterations=args.max_iterations,
-        population_size=args.population_size,
         time_limit_s=args.time_limit_s,
     )
 

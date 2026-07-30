@@ -49,9 +49,9 @@ def _matrix() -> list[StrategyRun]:
     return [
         StrategyRun("cp_exact_auto", "cp", "exact", "auto", 30.0, 90.0, cp_workers=8),
         StrategyRun(
-            "cp_ga_auto",
+            "cp_search_auto",
             "cp",
-            "ga",
+            "search",
             "auto",
             None,
             30.0,
@@ -66,9 +66,9 @@ def _matrix() -> list[StrategyRun]:
         StrategyRun("milp_exact_optx", "milp", "exact", "optx", 5.0, 45.0),
         StrategyRun("milp_exact_mathopt", "milp", "exact", "mathopt_mp", 30.0, 60.0, mathopt_solver_type="GSCIP"),
         StrategyRun(
-            "milp_ga_auto",
+            "milp_search_auto",
             "milp",
-            "ga",
+            "search",
             "auto",
             None,
             30.0,
@@ -158,7 +158,9 @@ def _run_one(run: StrategyRun) -> dict[str, Any]:
             "stdout": exc.stdout[-4000:] if exc.stdout else "",
             "stderr": exc.stderr[-4000:] if exc.stderr else "",
             "payload": None,
-            "summary": {"error": {"type": "TimeoutExpired", "message": f"wall timeout after {run.wall_timeout_seconds}s"}},
+            "summary": {
+                "error": {"type": "TimeoutExpired", "message": f"wall timeout after {run.wall_timeout_seconds}s"}
+            },
         }
 
     stdout = proc.stdout.strip()

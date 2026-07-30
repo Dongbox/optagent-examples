@@ -21,21 +21,22 @@ def test_sequence_external_model_scoring_matches_domain_semantics() -> None:
     assert transition.kind.value == "external_call"
 
 
-def test_sequence_external_callback_runs_ga_on_toy() -> None:
+def test_sequence_external_callback_runs_automatic_portfolio_on_toy() -> None:
     instance = steel_sequence_external.load_steel_instances()["toy"]
     payload = steel_sequence_external.solve_sequence_external(
         instance=instance,
         seed=5,
-        max_iterations=4,
-        population_size=4,
         time_limit_s=5.0,
         trace_limit=4,
     )
 
-    rows = {row["strategy"]: row for row in payload["strategies"]}
+    rows = {row["algorithm"]: row for row in payload["solutions"]}
     assert payload["modeling"] == "sequence_external_callback"
-    assert set(rows) == {"ga"}
+    assert set(rows) == {"portfolio"}
     for row in rows.values():
         assert sorted(row["sequence"]) == list(range(len(instance.coils)))
-        assert row["objective"] == steel_sequence_external.analyze_sequence(row["sequence"], instance.coils)["transition_count"]
-        assert row["metadata"]["strategy"] == row["strategy"]
+        assert (
+            row["objective"]
+            == steel_sequence_external.analyze_sequence(row["sequence"], instance.coils)["transition_count"]
+        )
+        assert row["metadata"]["algorithm"] == row["algorithm"]

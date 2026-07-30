@@ -10,7 +10,7 @@ def solution_metadata(solution: UnifiedSolution) -> dict[str, Any]:
     metadata = dict(solution.diagnostics)
     metadata.update(
         {
-            "strategy": solution.result.strategy,
+            "algorithm": solution.result.algorithm,
             "iterations": solution.result.iterations,
             "wall_time_seconds": solution.result.wall_time_seconds,
             "termination_reason": solution.result.termination_reason,

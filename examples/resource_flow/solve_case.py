@@ -7,16 +7,16 @@ import sys
 from time import perf_counter
 from typing import Any
 
-from optagent import CpSatConfig, GaConfig, MilpConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
+from optagent import CpSatConfig, MilpConfig, UnifiedSolution, solve, solve_cpsat, solve_milp
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from examples.resource_flow.case_loader import load_case
-from examples.resource_flow.cp_builder import build_single_window_program
-from examples.resource_flow.milp_builder import build_single_window_milp_program
-from examples._common import solution_metadata
+from examples.resource_flow.case_loader import load_case  # noqa: E402
+from examples.resource_flow.cp_builder import build_single_window_program  # noqa: E402
+from examples.resource_flow.milp_builder import build_single_window_milp_program  # noqa: E402
+from examples._common import solution_metadata  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--planning-period", type=int, default=3)
     parser.add_argument("--modeling-period", type=int, default=3)
     parser.add_argument("--window-index", type=int, default=0)
-    parser.add_argument("--mode", choices=["exact", "ga"], default="exact")
+    parser.add_argument("--mode", choices=["exact", "search"], default="exact")
     parser.add_argument("--backend", choices=["auto", "optx", "mathopt_mp"], default="auto")
     parser.add_argument("--summary-only", action="store_true")
     parser.add_argument("--time-limit-seconds", type=float)
@@ -131,15 +131,9 @@ def _exact_solve(args: argparse.Namespace, program: Any) -> Any:
     )
 
 
-def _ga_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
-    iterations = max(1, args.heuristic_total_budget or args.seed_budget + args.intensify_budget)
+def _portfolio_solve(args: argparse.Namespace, program: Any) -> UnifiedSolution:
     return solve(
         program,
-        strategy=GaConfig(
-            max_iterations=iterations,
-            population_size=6,
-        ),
-        max_iterations=iterations,
         time_limit_s=args.heuristic_time_limit_seconds or 1.0,
         seed=0,
         trace_output="summary",
@@ -157,7 +151,7 @@ def main() -> None:
         if args.mode == "exact":
             solution = _exact_solve(args, program)
         else:
-            solution = _ga_solve(args, program)
+            solution = _portfolio_solve(args, program)
         solve_seconds = perf_counter() - solve_start
         payload.update(
             {
