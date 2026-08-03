@@ -27,7 +27,7 @@ MTZ 等子回路消除约束。这样 TSP 仍然是一个可交给精确 MP 后�
 不需要使用 Python 黑盒评分函数。
 
 对于只包含有界整数和结构化序列转移成本的模型，也可以使用
-`sequence_var` + `sequence_transition_sum`，再选择统一的 `solve(...)` 路径。
+`permutation_var` + `sequence_transition_sum`，再选择统一的 `solve(...)` 路径。
 
 ## 求解方案
 

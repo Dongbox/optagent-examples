@@ -12,8 +12,8 @@ from _common import print_solution
 
 def build_model() -> tuple[object, dict[str, int]]:
     builder = ModelBuilder(metadata={"case": "job_shop_small"})
-    machine_a = builder.sequence_var(size=2, default=[0, 1], name="machine_a")
-    machine_b = builder.sequence_var(size=2, default=[0, 1], name="machine_b")
+    machine_a = builder.permutation_var(universe=2, default=[0, 1], name="machine_a")
+    machine_b = builder.permutation_var(universe=2, default=[0, 1], name="machine_b")
 
     job1_a = builder.interval_var(start=0, length=2, lb_start=0, ub_start=8, lb_length=2, ub_length=2, name="job1_a")
     job1_b = builder.interval_var(start=0, length=3, lb_start=0, ub_start=10, lb_length=3, ub_length=3, name="job1_b")

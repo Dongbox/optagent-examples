@@ -121,12 +121,12 @@ def build_sequence_external_model(instance: SteelCoilInstance) -> SequenceExtern
             "sequence_break_window": 24,
         }
     )
-    coil_sequence = builder.sequence_var(
-        size=len(instance.coils),
+    coil_sequence = builder.permutation_var(
+        universe=len(instance.coils),
         default=default_sequence,
         name="coil_sequence",
     )
-    builder.constraint(builder.sequence_contains(coil_sequence, 0), name="contains_first_coil")
+    builder.constraint(builder.contains(coil_sequence, 0), name="contains_first_coil")
 
     def transition_count_callback(ctx: ExternalCallbackContext) -> int:
         sequence = [int(item) for item in ctx.value(coil_sequence)]
