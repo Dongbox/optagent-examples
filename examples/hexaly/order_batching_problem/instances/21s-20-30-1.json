@@ -1,0 +1,222 @@
+{
+  "instanceName": "21s-20-30-1",
+  "distribution": "abc",
+  "nbOrders": 20,
+  "capacity": 30,
+  "nbAisles": 10,
+  "maxNbBatches": 20,
+  "aisleTraversal": 47,
+  "gap": 5.0,
+  "depotOffset": 0.0,
+  "orders": [
+    {
+      "nbItems": 10,
+      "aislesToVisit": [
+        0,
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "nbItems": 9,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        6,
+        8
+      ]
+    },
+    {
+      "nbItems": 23,
+      "aislesToVisit": [
+        0,
+        3,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 23,
+      "aislesToVisit": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 17,
+      "aislesToVisit": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 14,
+      "aislesToVisit": [
+        0,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 5,
+      "aislesToVisit": [
+        0,
+        3
+      ]
+    },
+    {
+      "nbItems": 8,
+      "aislesToVisit": [
+        0,
+        6,
+        7,
+        9
+      ]
+    },
+    {
+      "nbItems": 13,
+      "aislesToVisit": [
+        0,
+        3,
+        5,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 17,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 9,
+      "aislesToVisit": [
+        0,
+        3,
+        5,
+        6,
+        7,
+        9
+      ]
+    },
+    {
+      "nbItems": 10,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        9
+      ]
+    },
+    {
+      "nbItems": 5,
+      "aislesToVisit": [
+        0,
+        6,
+        7
+      ]
+    },
+    {
+      "nbItems": 21,
+      "aislesToVisit": [
+        0,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 11,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        8
+      ]
+    },
+    {
+      "nbItems": 18,
+      "aislesToVisit": [
+        0,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "nbItems": 17,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        6,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 19,
+      "aislesToVisit": [
+        0,
+        3,
+        5,
+        6,
+        7,
+        9
+      ]
+    },
+    {
+      "nbItems": 15,
+      "aislesToVisit": [
+        0,
+        4,
+        6,
+        8,
+        9
+      ]
+    },
+    {
+      "nbItems": 16,
+      "aislesToVisit": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    }
+  ]
+}
