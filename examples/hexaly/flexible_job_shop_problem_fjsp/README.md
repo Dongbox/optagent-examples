@@ -6,19 +6,21 @@ and print each operation's selected machine, start time, and end time.
 
 ## Install
 
-Install OptAgent from the approved distribution for your environment, then
-install JupyterLab:
+Install the OptAgent wheel for your Python version and platform together with
+JupyterLab:
 
 ```bash
-python -m pip install jupyterlab
+python -m pip install /path/to/optagent-VERSION-PYTHON_TAG-PLATFORM_TAG.whl jupyterlab
 ```
 
 ## Run
 
-From the public examples repository root, start the notebook with:
+From the public examples repository root, enter this example directory and
+start the notebook with:
 
 ```bash
-python -m jupyter lab examples/hexaly/flexible_job_shop_problem_fjsp/flexible_job_shop_problem_fjsp.ipynb
+cd examples/hexaly/flexible_job_shop_problem_fjsp
+python -m jupyter lab flexible_job_shop_problem_fjsp.ipynb
 ```
 
 Run the notebook cells in order. The final cell solves `instances/tiny.fjs`
