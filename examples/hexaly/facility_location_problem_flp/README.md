@@ -10,7 +10,7 @@ Install the OptAgent wheel for your Python version and platform together with
 JupyterLab:
 
 ```bash
-python -m pip install /path/to/optagent-1.2.0-cp312-cp312-<platform-tag>.whl jupyterlab
+python -m pip install /path/to/optagent-VERSION-PYTHON_TAG-PLATFORM_TAG.whl jupyterlab
 ```
 
 ## Run
