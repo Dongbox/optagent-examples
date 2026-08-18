@@ -6,11 +6,11 @@ instance.
 
 ## Install
 
-Install OptAgent from the approved distribution for your environment, then
-install JupyterLab:
+Install the OptAgent wheel for your Python version and platform together with
+JupyterLab:
 
 ```bash
-python -m pip install jupyterlab
+python -m pip install /path/to/optagent-1.2.0-cp312-cp312-<platform-tag>.whl jupyterlab
 ```
 
 ## Run
