@@ -3,6 +3,8 @@
 This directory contains a notebook that models the box-constrained Hosaki
 function with OptAgent. The objective remains a Python external function of
 two floating-point decision variables, matching the original Hexaly model.
+The callback is registered with `create_double_external_function` and invoked
+with the two decision expressions.
 
 ## Install
 
