@@ -7,7 +7,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_examples_match_the_current_public_api_surface() -> None:
-    assert not (ROOT / "examples/presets").exists()
+    examples = ROOT / "examples"
+    assert (examples / "hexaly").is_dir()
+    maintained = {
+        path.name
+        for path in examples.iterdir()
+        if path.is_dir()
+        and not path.name.startswith(".")
+        and any(next(path.rglob(pattern), None) is not None for pattern in ("*.py", "*.md", "*.ipynb"))
+    }
+    assert maintained == {"hexaly"}
 
     source_paths = [
         ROOT / "README.md",
