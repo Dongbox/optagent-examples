@@ -12,11 +12,11 @@ python -m pip install -r requirements-dev.txt
 
 ## Run
 
-Open a notebook under `examples/<label>/`, or run the contract suite from the
+Open a notebook under `examples/<label>/`, or run the tests from the
 repository root:
 
 ```bash
-python -m pytest -q tests/test_hexaly_a_to_j_contract.py
+python -m pytest -q
 ```
 
 ## Test
@@ -29,7 +29,5 @@ Only public, reproducible data belongs here.
 
 ## Test Ownership
 
-- `tests/test_hexaly_a_to_j_contract.py` owns the notebook-to-public-solve and
-  C++ initial-evaluator contract for the maintained A-J example set.
 - Core API and kernel behavior remains owned by the private OptAgent repository;
   this repository only tests the public example contract.

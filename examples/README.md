@@ -28,11 +28,11 @@ python -m pip install -r requirements-dev.txt
 
 ## Run
 
-Open a notebook under one of the label directories, or run the contract suite
-from the repository root:
+Open a notebook under one of the label directories, or run the tests from the
+repository root:
 
 ```bash
-python -m pytest -q tests/test_hexaly_a_to_j_contract.py
+python -m pytest -q
 ```
 
 ## Test
