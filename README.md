@@ -1,7 +1,7 @@
 # OptAgent Examples
 
 This repository contains the maintained Hexaly-compatible OptAgent examples.
-Each notebook under `examples/hexaly/` builds a model with the public
+Each notebook under `examples/<label>/` builds a model with the public
 `optagent` API and sends it through the production solve route.
 
 ## Install
@@ -12,7 +12,7 @@ python -m pip install -r requirements-dev.txt
 
 ## Run
 
-Open a notebook under `examples/hexaly/`, or run the contract suite from the
+Open a notebook under `examples/<label>/`, or run the contract suite from the
 repository root:
 
 ```bash

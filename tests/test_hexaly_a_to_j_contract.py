@@ -10,8 +10,14 @@ import optagent
 from optagent.external import HxExternalArgumentValues
 
 
-EXAMPLES = Path(__file__).parents[1] / "examples/hexaly"
-NOTEBOOKS = tuple(sorted(EXAMPLES.glob("[a-j]*/*.ipynb")))
+EXAMPLES = Path(__file__).parents[1] / "examples"
+NOTEBOOKS = tuple(
+    sorted(
+        notebook
+        for notebook in EXAMPLES.glob("*/*/*.ipynb")
+        if notebook.parent.name[0].lower() in "abcdefghij"
+    )
+)
 
 
 class _ModelEvaluated(Exception):

@@ -1,7 +1,22 @@
 # OptAgent Examples
 
-The maintained examples are the Hexaly-compatible notebooks under `hexaly/`.
-They use the public `optagent` modeling and solve interfaces.
+The maintained examples are grouped by the official Hexaly template labels:
+`location/`, `network_design/`, `nonlinear/`, `packing/`, `routing/`,
+`scheduling/`, and `simulation/`. They use the public `optagent` modeling and
+solve interfaces.
+
+| Label | Examples |
+| --- | ---: |
+| Location | 6 |
+| Network Design | 1 |
+| Nonlinear | 6 |
+| Packing | 12 |
+| Routing | 20 |
+| Scheduling | 28 |
+| Simulation | 3 |
+
+CPIT is kept only under `packing/`, so the seven directories contain 76 unique
+templates.
 
 ## Install
 
@@ -13,8 +28,8 @@ python -m pip install -r requirements-dev.txt
 
 ## Run
 
-Open a notebook under `hexaly/`, or run the contract suite from the repository
-root:
+Open a notebook under one of the label directories, or run the contract suite
+from the repository root:
 
 ```bash
 python -m pytest -q tests/test_hexaly_a_to_j_contract.py

@@ -7,7 +7,7 @@ from typing import Any
 
 NOTEBOOK = (
     Path(__file__).parents[1]
-    / "examples/hexaly/multi_trip_capacitated_vehicle_routing_problem_mtcvrp"
+    / "examples/routing/multi_trip_capacitated_vehicle_routing_problem_mtcvrp"
     / "multi_trip_capacitated_vehicle_routing_problem_mtcvrp.ipynb"
 )
 

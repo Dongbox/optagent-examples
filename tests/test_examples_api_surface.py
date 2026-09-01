@@ -4,11 +4,19 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_CATEGORY_COUNTS = {
+    "location": 6,
+    "network_design": 1,
+    "nonlinear": 6,
+    "packing": 12,
+    "routing": 20,
+    "scheduling": 28,
+    "simulation": 3,
+}
 
 
 def test_examples_match_the_current_public_api_surface() -> None:
     examples = ROOT / "examples"
-    assert (examples / "hexaly").is_dir()
     maintained = {
         path.name
         for path in examples.iterdir()
@@ -16,7 +24,15 @@ def test_examples_match_the_current_public_api_surface() -> None:
         and not path.name.startswith(".")
         and any(next(path.rglob(pattern), None) is not None for pattern in ("*.py", "*.md", "*.ipynb"))
     }
-    assert maintained == {"hexaly"}
+    assert maintained == EXPECTED_CATEGORY_COUNTS.keys()
+
+    category_counts = {
+        category: sum(path.is_dir() for path in (examples / category).iterdir())
+        for category in EXPECTED_CATEGORY_COUNTS
+    }
+    assert category_counts == EXPECTED_CATEGORY_COUNTS
+    assert (examples / "packing/constrained_pit_limit_problem_cpit").is_dir()
+    assert not (examples / "scheduling/constrained_pit_limit_problem_cpit").exists()
 
     source_paths = [
         ROOT / "README.md",
