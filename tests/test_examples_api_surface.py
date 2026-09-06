@@ -27,7 +27,7 @@ def test_examples_match_the_current_public_api_surface() -> None:
     assert maintained == EXPECTED_CATEGORY_COUNTS.keys()
 
     category_counts = {
-        category: sum(path.is_dir() for path in (examples / category).iterdir())
+        category: sum(path.is_dir() and path.name != "__pycache__" for path in (examples / category).iterdir())
         for category in EXPECTED_CATEGORY_COUNTS
     }
     assert category_counts == EXPECTED_CATEGORY_COUNTS
