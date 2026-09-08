@@ -19,6 +19,16 @@ repository root:
 python -m pytest -q
 ```
 
+## Modeling conventions
+
+Use `OptModel()` and omit optional `name` arguments in ordinary examples.
+Keep Python references to decision and objective expressions, then read `.value`
+after checking `solution.feasible`. Read `solution.objectives` in declaration
+order. Names and model identifiers are optional metadata, not result lookup keys;
+retain them when an example, its result handling, or its test fixtures actually
+uses them. The wind-farm fixture, for example, uses location names to assign
+fixed decision values.
+
 ## Test
 
 ```bash
