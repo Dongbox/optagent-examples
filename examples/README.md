@@ -1,6 +1,6 @@
 # OptAgent Examples
 
-The maintained examples are grouped by the official Hexaly template labels:
+The maintained OptAgent notebooks are grouped by problem category:
 `location/`, `network_design/`, `nonlinear/`, `packing/`, `routing/`,
 `scheduling/`, and `simulation/`. They use the public `optagent` modeling and
 solve interfaces.

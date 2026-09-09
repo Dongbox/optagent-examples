@@ -1,4 +1,5 @@
 pytest
+jupyterlab>=4,<5
 ortools
 highspy
 numpy

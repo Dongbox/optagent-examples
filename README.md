@@ -1,10 +1,14 @@
 # OptAgent Examples
 
-This repository contains the maintained Hexaly-compatible OptAgent examples.
+This repository contains runnable examples of the public OptAgent Python API.
 Each notebook under `examples/<label>/` builds a model with the public
 `optagent` API and sends it through the production solve route.
 
 ## Install
+
+Install the matching OptAgent package and configure its license following the
+[installation guide](https://optagent.pages.dev/start/installation/), then install
+the notebook tools and example dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -12,11 +16,12 @@ python -m pip install -r requirements-dev.txt
 
 ## Run
 
-Open a notebook under `examples/<label>/`, or run the tests from the
-repository root:
+Start JupyterLab from the example directory so relative instance paths resolve.
+For example, from the repository root:
 
 ```bash
-python -m pytest -q
+cd examples/packing/knapsack_problem
+python -m jupyterlab knapsack_problem.ipynb
 ```
 
 ## Modeling conventions
@@ -36,6 +41,15 @@ python -m pytest -q
 ```
 
 Only public, reproducible data belongs here.
+
+## Documentation
+
+Browse the [example catalog](https://optagent.pages.dev/examples/) to read notebooks
+without starting a Python kernel. The documentation site renders these notebooks
+without executing them and offers a complete example ZIP with instance files.
+Notebook prose should describe this implementation's OptAgent APIs. Preserve
+problem/data attribution and copyright notices; do not present another solver's
+benchmark results as OptAgent results. Add verified outputs separately when ready.
 
 ## Test Ownership
 
